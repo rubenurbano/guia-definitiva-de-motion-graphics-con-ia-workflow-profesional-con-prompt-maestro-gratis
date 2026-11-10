@@ -1,0 +1,2499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>Motion Graphics con IA: Prompt Maestro — V001</title>
+<style>
+:root {
+  --bg-main: #0a0e1a;
+  --bg-card: #0f172a;
+  --bg-highlight: #1e3a5f;
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent-alt: #00d4ff;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --border: #1e3a5f;
+  --font-size-base: 16px;
+}
+
+body.light-theme {
+  --bg-main: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-highlight: #dbeafe;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --accent: #0284c7;
+  --accent-alt: #0369a1;
+  --border: #cbd5e1;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  font-size: var(--font-size-base);
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  line-height: 1.6;
+  overflow-x: hidden;
+  padding-top: 112px;
+  padding-bottom: 90px;
+}
+
+/* Barra de progreso superior */
+#reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent), #a855f7);
+  width: 0%;
+  z-index: 100;
+  transition: width 0.15s ease;
+}
+
+/* Cabecera de herramientas y navegación */
+header.top-system-bar {
+  position: fixed;
+  top: 4px;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  z-index: 40;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+.utility-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  gap: 6px;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 240px;
+  background: var(--bg-main);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.search-box input {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  font-size: 0.85rem;
+  width: 100%;
+  min-height: 32px;
+  outline: none;
+}
+
+.tool-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tool-btn {
+  background: var(--bg-main);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tool-btn:hover, .tool-btn:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+/* Barra de navegación principal (Chips + Botón Índice) */
+nav#main-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  white-space: nowrap;
+}
+
+nav#main-nav::-webkit-scrollbar {
+  height: 4px;
+}
+
+nav#main-nav::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.chip:hover, .chip:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.chip.active {
+  background: var(--accent);
+  color: #050811;
+  border-color: var(--accent);
+  font-weight: 800;
+}
+
+#mb {
+  background: var(--bg-highlight);
+  color: #ffffff;
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
+/* Panel lateral Índice (#dr) según especificación exacta */
+#dr {
+  position: fixed;
+  top: 108px;
+  left: 0;
+  bottom: 0;
+  width: min(330px, 88vw);
+  background: #0f172a;
+  border-right: 1px solid #1e3a5f;
+  transform: translateX(-105%);
+  transition: .25s;
+  z-index: 50;
+  overflow: auto;
+  padding: 10px;
+  box-shadow: 6px 0 24px rgba(0, 0, 0, 0.65);
+}
+
+#dr.o {
+  transform: none;
+}
+
+#dr a {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 8px;
+  color: #e2e8f0;
+  cursor: pointer;
+  min-height: 44px;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+}
+
+#dr a:hover, #dr a:focus-visible {
+  background: #ffffff0d;
+  border-color: #38bdf855;
+  outline: none;
+}
+
+#dr a.on {
+  background: #00d4ff22;
+  color: #00d4ff;
+  border-color: #00d4ff66;
+}
+
+/* Contenedor principal optimizado para Samsung Galaxy A02s (360px) */
+main.container {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 12px 12px 24px;
+}
+
+.tab-section {
+  display: none;
+  animation: fadeIn 0.22s ease-out;
+}
+
+.tab-section.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Tipografía y estructura de tarjetas */
+h1 {
+  font-size: clamp(1.35rem, 4.5vw, 2.1rem);
+  line-height: 1.25;
+  color: var(--accent);
+  margin-bottom: 12px;
+  font-weight: 800;
+}
+
+h2 {
+  font-size: clamp(1.2rem, 4vw, 1.65rem);
+  color: var(--accent);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+}
+
+h3 {
+  font-size: clamp(1.05rem, 3.5vw, 1.3rem);
+  color: var(--text-main);
+  margin: 18px 0 10px;
+}
+
+h4 {
+  font-size: 1rem;
+  color: var(--accent);
+  margin: 12px 0 6px;
+}
+
+p {
+  margin-bottom: 12px;
+}
+
+ul, ol {
+  margin: 0 0 14px 20px;
+}
+
+li {
+  margin-bottom: 6px;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.card-highlight {
+  background: linear-gradient(145deg, var(--bg-card), var(--bg-highlight));
+  border-left: 4px solid var(--accent);
+}
+
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: var(--bg-highlight);
+  color: var(--accent);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.badge.level-1 { background: rgba(34, 197, 94, 0.18); color: #4ade80; border-color: #22c55e; }
+.badge.level-2 { background: rgba(245, 158, 11, 0.18); color: #fbbf24; border-color: #f59e0b; }
+.badge.level-3 { background: rgba(239, 68, 68, 0.18); color: #f87171; border-color: #ef4444; }
+
+/* Contenedor SVG Hero formato 4:5 adaptable */
+.svg-hero-wrapper {
+  width: 100%;
+  max-width: 440px;
+  aspect-ratio: 4 / 5;
+  margin: 0 auto 18px;
+  background: #060913;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6);
+}
+
+.svg-mount-node {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.svg-mount-node svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.svg-controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+/* Animaciones CSS del SVG Hero */
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.55; transform: scale(0.98); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+@keyframes orbitSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbitReverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+@keyframes floatVertical {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-7px); }
+}
+
+@keyframes streamFlow {
+  to { stroke-dashoffset: -48; }
+}
+
+@keyframes audioWave {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1.15); }
+}
+
+.svg-orbit-cw {
+  transform-origin: 200px 235px;
+  animation: orbitSlow 22s linear infinite;
+}
+
+.svg-orbit-ccw {
+  transform-origin: 200px 235px;
+  animation: orbitReverse 16s linear infinite;
+}
+
+.svg-float {
+  animation: floatVertical 4s ease-in-out infinite;
+}
+
+.svg-stream {
+  stroke-dasharray: 8 6;
+  animation: streamFlow 1.8s linear infinite;
+}
+
+.svg-pulse {
+  transform-origin: center;
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+.svg-wave-bar {
+  transform-origin: center 425px;
+  animation: audioWave 1.1s ease-in-out infinite;
+}
+
+body.svg-paused .svg-orbit-cw,
+body.svg-paused .svg-orbit-ccw,
+body.svg-paused .svg-float,
+body.svg-paused .svg-stream,
+body.svg-paused .svg-pulse,
+body.svg-paused .svg-wave-bar {
+  animation-play-state: paused !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .svg-orbit-cw,
+  .svg-orbit-ccw,
+  .svg-float,
+  .svg-stream,
+  .svg-pulse,
+  .svg-wave-bar {
+    animation: none !important;
+  }
+}
+
+/* Bloques de código y prompts copiables */
+.copy-box {
+  background: #060912;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin: 12px 0 16px;
+  overflow: hidden;
+}
+
+.copy-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(30, 58, 95, 0.45);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  gap: 8px;
+}
+
+.copy-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.btn-copy {
+  background: var(--accent);
+  color: #050811;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  min-height: 36px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.btn-copy:hover, .btn-copy:focus-visible {
+  filter: brightness(1.1);
+  outline: 2px solid #ffffff;
+}
+
+pre.copy-content {
+  padding: 12px;
+  color: #f8fafc;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.88rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+/* Tarjetas de Enlace URL con botón obligatorio "Abrir enlace en nueva ventana" */
+.url-card {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.url-string {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: var(--accent);
+  word-break: break-all;
+  background: #060912;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
+.url-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn-ext-link, .btn-secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1px solid var(--accent);
+}
+
+.btn-ext-link {
+  background: var(--accent);
+  color: #060913;
+}
+
+.btn-secondary-action {
+  background: var(--bg-highlight);
+  color: #ffffff;
+}
+
+/* Tablas adaptables a móvil 360px */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin: 12px 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 290px;
+  font-size: 0.88rem;
+}
+
+th, td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+th {
+  background: var(--bg-highlight);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* Desplegables / Acordeones */
+details.qa-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+details.qa-item summary {
+  padding: 12px 14px;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text-main);
+  list-style: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 46px;
+}
+
+details.qa-item summary::-webkit-details-marker {
+  display: none;
+}
+
+details.qa-item summary::after {
+  content: "＋";
+  color: var(--accent);
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+details.qa-item[open] summary::after {
+  content: "－";
+}
+
+.qa-body {
+  padding: 0 14px 14px;
+  color: var(--text-main);
+  border-top: 1px solid rgba(56, 189, 248, 0.15);
+  padding-top: 10px;
+}
+
+/* Listas de comprobación interactivas */
+.checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(30, 58, 95, 0.2);
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.checklist-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* Navegación Anterior / Siguiente al final de cada pestaña */
+.tab-footer-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 14px;
+  background: var(--bg-card);
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  position: sticky;
+  bottom: 10px;
+  z-index: 20;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65);
+}
+
+.btn-nav-step {
+  flex: 1;
+  min-height: 46px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: var(--bg-highlight);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+}
+
+.btn-nav-step.next {
+  background: var(--accent);
+  color: #050811;
+}
+
+/* Botones flotantes movibles (Arrastrables en móvil y escritorio) */
+.floating-draggable {
+  position: fixed;
+  z-index: 60;
+  min-width: 58px;
+  min-height: 46px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #0f172a;
+  color: var(--accent);
+  border: 2px solid var(--accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.75);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.floating-draggable:active {
+  cursor: grabbing;
+  background: var(--accent);
+  color: #050811;
+}
+
+#fab-home {
+  right: 12px;
+  bottom: 136px;
+}
+
+#fab-top {
+  right: 12px;
+  bottom: 78px;
+}
+
+/* Estilos de Créditos */
+.author-spotlight {
+  font-size: clamp(1.8rem, 6vw, 2.7rem);
+  font-weight: 900;
+  color: var(--accent);
+  text-align: center;
+  letter-spacing: 0.5px;
+  margin: 12px 0 4px;
+  text-shadow: 0 0 18px rgba(56, 189, 248, 0.35);
+}
+
+.author-role {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 16px;
+}
+
+/* Notificación Toast */
+#toast-msg {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(120px);
+  background: var(--accent);
+  color: #050811;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.88rem;
+  z-index: 120;
+  transition: transform 0.25s ease;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+}
+
+#toast-msg.visible {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Optimización estricta para móviles pequeños (Samsung Galaxy A02s - 360px) */
+@media (max-width: 400px) {
+  body {
+    padding-top: 108px;
+  }
+  main.container {
+    padding: 8px 8px 24px;
+  }
+  .card {
+    padding: 12px;
+  }
+  .chip {
+    padding: 6px 11px;
+    font-size: 0.8rem;
+  }
+  .btn-nav-step {
+    font-size: 0.78rem;
+    padding: 8px 6px;
+  }
+}
+
+/* Hoja de estilos de Impresión A4 */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 14mm 12mm;
+  }
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    font-size: 11pt !important;
+  }
+  header.top-system-bar,
+  #dr,
+  #reading-progress,
+  .floating-draggable,
+  .tab-footer-nav,
+  .svg-controls,
+  .btn-copy,
+  #toast-msg {
+    display: none !important;
+  }
+  .tab-section {
+    display: block !important;
+    margin-bottom: 18pt;
+    page-break-inside: auto;
+  }
+  .card, .copy-box, .url-card, details.qa-item {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #444444 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+  h1, h2, h3, h4, .author-spotlight {
+    color: #000000 !important;
+    text-shadow: none !important;
+  }
+  pre.copy-content, .url-string {
+    background: #f8f8f8 !important;
+    color: #000000 !important;
+    border: 1px solid #cccccc !important;
+  }
+  .svg-hero-wrapper {
+    max-width: 260px !important;
+    border: 1px solid #000000 !important;
+    background: #060913 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+</style>
+</head>
+<body>
+
+<div id="reading-progress" aria-hidden="true"></div>
+
+<!-- Fuente única oculta del SVG (será extraída y eliminada del DOM al iniciar) -->
+<div id="master-svg-source" style="display:none;" aria-hidden="true">
+  <svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustración animada del ecosistema de Motion Graphics con Inteligencia Artificial: extracción del ADN visual en Claude, generación de escenas de 8 segundos en Google Flow y locución en Google AI Studio">
+    <defs>
+      <linearGradient id="bgGrad__UID__" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#050814"/>
+        <stop offset="50%" stop-color="#0f172a"/>
+        <stop offset="100%" stop-color="#1e1b4b"/>
+      </linearGradient>
+      <linearGradient id="cyanNeon__UID__" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#00d4ff"/>
+        <stop offset="100%" stop-color="#38bdf8"/>
+      </linearGradient>
+      <linearGradient id="magentaNeon__UID__" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#f43f5e"/>
+        <stop offset="50%" stop-color="#a855f7"/>
+        <stop offset="100%" stop-color="#38bdf8"/>
+      </linearGradient>
+      <radialGradient id="coreGlow__UID__" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.9"/>
+        <stop offset="55%" stop-color="#6366f1" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="#050814" stop-opacity="0"/>
+      </radialGradient>
+      <filter id="glowFilter__UID__" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="4" result="blur"/>
+        <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+      </filter>
+    </defs>
+
+    <!-- Fondo profundo 4:5 -->
+    <rect width="400" height="500" fill="url(#bgGrad__UID__)"/>
+
+    <!-- Cuadrícula de diseño y composición de agencia -->
+    <g stroke="#1e3a5f" stroke-width="0.7" opacity="0.45">
+      <line x1="0" y1="70" x2="400" y2="70"/>
+      <line x1="0" y1="150" x2="400" y2="150"/>
+      <line x1="0" y1="235" x2="400" y2="235"/>
+      <line x1="0" y1="320" x2="400" y2="320"/>
+      <line x1="0" y1="400" x2="400" y2="400"/>
+      <line x1="80" y1="0" x2="80" y2="500"/>
+      <line x1="200" y1="0" x2="200" y2="500"/>
+      <line x1="320" y1="0" x2="320" y2="500"/>
+    </g>
+
+    <!-- Halo de energía central -->
+    <circle cx="200" cy="235" r="135" fill="url(#coreGlow__UID__)" class="svg-pulse"/>
+
+    <!-- Anillos orbitales del motor de IA (Claude + Ovniflash) -->
+    <g class="svg-orbit-cw">
+      <circle cx="200" cy="235" r="112" fill="none" stroke="url(#cyanNeon__UID__)" stroke-width="1.6" stroke-dasharray="18 10 6 10" opacity="0.75"/>
+      <circle cx="200" cy="123" r="5" fill="#00d4ff" filter="url(#glowFilter__UID__)"/>
+      <circle cx="312" cy="235" r="4" fill="#a855f7"/>
+      <circle cx="88" cy="235" r="4" fill="#38bdf8"/>
+    </g>
+
+    <g class="svg-orbit-ccw">
+      <circle cx="200" cy="235" r="88" fill="none" stroke="url(#magentaNeon__UID__)" stroke-width="2" stroke-dasharray="28 14" opacity="0.8"/>
+      <polygon points="200,141 205,151 195,151" fill="#f43f5e"/>
+      <polygon points="200,329 205,319 195,319" fill="#00d4ff"/>
+    </g>
+
+    <!-- Nodos superiores: Fase 1 (Pinterest) y Fase 2 (ADN Visual en Claude) -->
+    <g class="svg-float">
+      <rect x="26" y="28" width="118" height="48" rx="8" fill="#0f172a" stroke="#f43f5e" stroke-width="1.8"/>
+      <circle cx="46" cy="52" r="8" fill="#f43f5e"/>
+      <text x="62" y="49" fill="#e2e8f0" font-size="10" font-weight="bold" font-family="sans-serif">PINTEREST</text>
+      <text x="62" y="63" fill="#94a3b8" font-size="8.5" font-family="sans-serif">Ref. Visual</text>
+
+      <rect x="256" y="28" width="118" height="48" rx="8" fill="#0f172a" stroke="#a855f7" stroke-width="1.8"/>
+      <circle cx="276" cy="52" r="8" fill="#a855f7"/>
+      <text x="292" y="49" fill="#e2e8f0" font-size="10" font-weight="bold" font-family="sans-serif">CLAUDE IA</text>
+      <text x="292" y="63" fill="#38bdf8" font-size="8.5" font-family="sans-serif">Prompt Maestro</text>
+    </g>
+
+    <!-- Flujos de datos animados hacia el visor 9:16 -->
+    <path d="M 85 76 C 85 125, 145 130, 165 160" fill="none" stroke="#f43f5e" stroke-width="2.2" class="svg-stream"/>
+    <path d="M 315 76 C 315 125, 255 130, 235 160" fill="none" stroke="#00d4ff" stroke-width="2.2" class="svg-stream"/>
+
+    <!-- Doble Hélice lateral izquierda: ADN Visual (Colores, Tipografía, Transiciones) -->
+    <g transform="translate(26, 155)">
+      <rect x="0" y="0" width="66" height="160" rx="8" fill="#090d1a" stroke="#1e3a5f" stroke-width="1.2"/>
+      <text x="33" y="18" fill="#38bdf8" font-size="8.5" font-weight="bold" text-anchor="middle" font-family="sans-serif">ADN VISUAL</text>
+      <path d="M 16 32 Q 48 52, 16 72 T 16 112 T 16 144" fill="none" stroke="#00d4ff" stroke-width="2" class="svg-stream"/>
+      <path d="M 48 32 Q 16 52, 48 72 T 48 112 T 48 144" fill="none" stroke="#a855f7" stroke-width="2" class="svg-stream"/>
+      <line x1="22" y1="42" x2="42" y2="42" stroke="#e2e8f0" stroke-width="1.2"/>
+      <line x1="22" y1="62" x2="42" y2="62" stroke="#f43f5e" stroke-width="1.2"/>
+      <line x1="22" y1="82" x2="42" y2="82" stroke="#38bdf8" stroke-width="1.2"/>
+      <line x1="22" y1="102" x2="42" y2="102" stroke="#22c55e" stroke-width="1.2"/>
+      <line x1="22" y1="122" x2="42" y2="122" stroke="#f59e0b" stroke-width="1.2"/>
+    </g>
+
+    <!-- Panel lateral derecho: Clips modulares de 8s (Modo Agente) -->
+    <g transform="translate(308, 155)">
+      <rect x="0" y="0" width="66" height="160" rx="8" fill="#090d1a" stroke="#1e3a5f" stroke-width="1.2"/>
+      <text x="33" y="18" fill="#22c55e" font-size="8" font-weight="bold" text-anchor="middle" font-family="sans-serif">CLIPS 8 SEG</text>
+      <rect x="8" y="28" width="50" height="24" rx="4" fill="#1e3a5f" stroke="#38bdf8" stroke-width="1"/>
+      <text x="33" y="43" fill="#ffffff" font-size="7.5" text-anchor="middle" font-family="monospace">ESCENA 01</text>
+      <rect x="8" y="60" width="50" height="24" rx="4" fill="#1e3a5f" stroke="#a855f7" stroke-width="1"/>
+      <text x="33" y="75" fill="#ffffff" font-size="7.5" text-anchor="middle" font-family="monospace">ESCENA 02</text>
+      <rect x="8" y="92" width="50" height="24" rx="4" fill="#1e3a5f" stroke="#f43f5e" stroke-width="1"/>
+      <text x="33" y="107" fill="#ffffff" font-size="7.5" text-anchor="middle" font-family="monospace">ESCENA 03</text>
+      <rect x="8" y="124" width="50" height="24" rx="4" fill="#052e16" stroke="#22c55e" stroke-width="1"/>
+      <text x="33" y="139" fill="#4ade80" font-size="7.5" text-anchor="middle" font-family="monospace">AGENT ON</text>
+    </g>
+
+    <!-- PROTAGONISTA CENTRAL: Marco Vertical 9:16 (Google Flow - Ovniflash) -->
+    <g transform="translate(136, 118)">
+      <rect x="0" y="0" width="128" height="226" rx="14" fill="#050811" stroke="url(#cyanNeon__UID__)" stroke-width="3" filter="url(#glowFilter__UID__)"/>
+      <rect x="8" y="12" width="112" height="202" rx="8" fill="#0b1329" stroke="#1e3a5f" stroke-width="1"/>
+      <!-- Etiqueta de formato 9:16 -->
+      <rect x="34" y="18" width="60" height="16" rx="8" fill="#00d4ff22" stroke="#00d4ff" stroke-width="1"/>
+      <text x="64" y="29" fill="#00d4ff" font-size="8.5" font-weight="bold" text-anchor="middle" font-family="monospace">9:16 FLOW</text>
+
+      <!-- Escena de Motion Graphics animada en el interior del teléfono -->
+      <g class="svg-float">
+        <polygon points="64,54 96,104 32,104" fill="url(#magentaNeon__UID__)" opacity="0.85"/>
+        <circle cx="64" cy="86" r="14" fill="#00d4ff" filter="url(#glowFilter__UID__)"/>
+      </g>
+
+      <!-- Capas tipográficas animadas -->
+      <rect x="20" y="122" width="88" height="10" rx="3" fill="#38bdf8" class="svg-pulse"/>
+      <rect x="28" y="138" width="72" height="7" rx="3" fill="#a855f7"/>
+      <rect x="20" y="154" width="88" height="32" rx="5" fill="#0f172a" stroke="#38bdf8" stroke-width="1"/>
+      <text x="64" y="168" fill="#e2e8f0" font-size="7.5" font-weight="bold" text-anchor="middle" font-family="sans-serif">OVNIFLASH</text>
+      <text x="64" y="180" fill="#4ade80" font-size="7" text-anchor="middle" font-family="monospace">RENDER 00:08s</text>
+    </g>
+
+    <!-- SECCIÓN INFERIOR: Línea de tiempo CapCut/Filmcraft + Onda de Voz (Google AI Studio - Voz Pola) -->
+    <g transform="translate(20, 368)">
+      <rect x="0" y="0" width="360" height="112" rx="10" fill="#090d1a" stroke="#1e3a5f" stroke-width="1.6"/>
+      <text x="14" y="20" fill="#38bdf8" font-size="9.5" font-weight="bold" font-family="sans-serif">TIMELINE A/V: GOOGLE AI STUDIO (VOZ POLA) + CAPCUT / FILMCRAFT</text>
+
+      <!-- Pista de clips de 8s -->
+      <rect x="14" y="28" width="80" height="20" rx="4" fill="#1e3a5f" stroke="#00d4ff" stroke-width="1"/>
+      <text x="54" y="41" fill="#e2e8f0" font-size="8" text-anchor="middle" font-family="monospace">CLIP 1 (8s)</text>
+
+      <rect x="98" y="28" width="80" height="20" rx="4" fill="#1e3a5f" stroke="#a855f7" stroke-width="1"/>
+      <text x="138" y="41" fill="#e2e8f0" font-size="8" text-anchor="middle" font-family="monospace">CLIP 2 (8s)</text>
+
+      <rect x="182" y="28" width="80" height="20" rx="4" fill="#1e3a5f" stroke="#f43f5e" stroke-width="1"/>
+      <text x="222" y="41" fill="#e2e8f0" font-size="8" text-anchor="middle" font-family="monospace">CLIP 3 (8s)</text>
+
+      <rect x="266" y="28" width="80" height="20" rx="4" fill="#1e3a5f" stroke="#22c55e" stroke-width="1"/>
+      <text x="306" y="41" fill="#e2e8f0" font-size="8" text-anchor="middle" font-family="monospace">CLIP 4 (8s)</text>
+
+      <!-- Onda de voz en off Gemini Flash -->
+      <rect x="14" y="54" width="332" height="44" rx="6" fill="#050811" stroke="#38bdf8" stroke-width="1"/>
+      <text x="24" y="68" fill="#a855f7" font-size="7.5" font-weight="bold" font-family="monospace">GEMINI FLASH AUDIO — VOZ: POLA</text>
+    </g>
+
+    <!-- Barras de ecualizador animadas de la locución -->
+    <g fill="#00d4ff">
+      <rect x="55" y="416" width="5" height="18" rx="2" class="svg-wave-bar"/>
+      <rect x="70" y="412" width="5" height="26" rx="2" class="svg-wave-bar" style="animation-delay:0.15s"/>
+      <rect x="85" y="418" width="5" height="14" rx="2" class="svg-wave-bar" style="animation-delay:0.3s"/>
+      <rect x="100" y="410" width="5" height="30" rx="2" class="svg-wave-bar" style="animation-delay:0.45s"/>
+      <rect x="115" y="415" width="5" height="20" rx="2" class="svg-wave-bar" style="animation-delay:0.2s"/>
+      <rect x="130" y="411" width="5" height="28" rx="2" class="svg-wave-bar" style="animation-delay:0.5s"/>
+      <rect x="145" y="417" width="5" height="16" rx="2" class="svg-wave-bar" style="animation-delay:0.1s"/>
+      <rect x="160" y="410" width="5" height="30" rx="2" class="svg-wave-bar" style="animation-delay:0.35s"/>
+      <rect x="175" y="414" width="5" height="22" rx="2" class="svg-wave-bar" style="animation-delay:0.25s"/>
+      <rect x="190" y="411" width="5" height="28" rx="2" class="svg-wave-bar" style="animation-delay:0.4s"/>
+      <rect x="205" y="416" width="5" height="18" rx="2" class="svg-wave-bar" style="animation-delay:0.15s"/>
+      <rect x="220" y="412" width="5" height="26" rx="2" class="svg-wave-bar" style="animation-delay:0.55s"/>
+      <rect x="235" y="415" width="5" height="20" rx="2" class="svg-wave-bar" style="animation-delay:0.3s"/>
+      <rect x="250" y="410" width="5" height="30" rx="2" class="svg-wave-bar" style="animation-delay:0.05s"/>
+      <rect x="265" y="416" width="5" height="18" rx="2" class="svg-wave-bar" style="animation-delay:0.45s"/>
+      <rect x="280" y="413" width="5" height="24" rx="2" class="svg-wave-bar" style="animation-delay:0.2s"/>
+      <rect x="295" y="417" width="5" height="16" rx="2" class="svg-wave-bar" style="animation-delay:0.35s"/>
+      <rect x="310" y="411" width="5" height="28" rx="2" class="svg-wave-bar" style="animation-delay:0.1s"/>
+      <rect x="325" y="415" width="5" height="20" rx="2" class="svg-wave-bar" style="animation-delay:0.5s"/>
+      <rect x="340" y="418" width="5" height="14" rx="2" class="svg-wave-bar" style="animation-delay:0.25s"/>
+    </g>
+  </svg>
+</div>
+
+<!-- Barra fija superior con buscador, herramientas y menú de pestañas -->
+<header class="top-system-bar">
+  <div class="utility-row">
+    <div class="search-box" role="search">
+      <input type="search" id="global-search" placeholder="Buscar en la pestaña..." aria-label="Buscar contenido en la pestaña activa">
+    </div>
+    <div class="tool-buttons">
+      <button type="button" class="tool-btn" id="btn-font-dec" title="Reducir tamaño de letra" aria-label="Reducir tamaño de letra">A−</button>
+      <button type="button" class="tool-btn" id="btn-font-inc" title="Aumentar tamaño de letra" aria-label="Aumentar tamaño de letra">A+</button>
+      <button type="button" class="tool-btn" id="btn-theme" title="Cambiar tema claro/oscuro" aria-label="Cambiar entre tema oscuro y claro">☀/☾</button>
+      <button type="button" class="tool-btn" id="btn-print" title="Imprimir o Guardar PDF" aria-label="Imprimir o guardar como PDF">PDF</button>
+    </div>
+  </div>
+
+  <!-- Navegación con el botón «☰ Índice» como primer elemento -->
+  <nav id="main-nav" aria-label="Secciones del tutorial">
+    <button class="chip" id="mb" aria-label="Abrir índice" aria-expanded="false">☰ Índice</button>
+    <button class="chip active" data-tab="0">INICIO</button>
+    <button class="chip" data-tab="1">CONCEPTOS</button>
+    <button class="chip" data-tab="2">PROCEDIMIENTO</button>
+    <button class="chip" data-tab="3">PRÁCTICA</button>
+    <button class="chip" data-tab="4">PROMPTS</button>
+    <button class="chip" data-tab="5">33 Preguntas (Q&amp;A)</button>
+    <button class="chip" data-tab="6">ERRORES</button>
+    <button class="chip" data-tab="7">RESUMEN</button>
+    <button class="chip" data-tab="8">FUENTES</button>
+    <button class="chip" data-tab="9">CRÉDITOS</button>
+  </nav>
+</header>
+
+<!-- Panel lateral del Índice (#dr) justo después del nav -->
+<div id="dr" role="navigation" aria-label="Índice completo de secciones"></div>
+
+<!-- CONTENIDO PRINCIPAL -->
+<main class="container" id="main-content">
+
+  <!-- ==================== PESTAÑA 0: INICIO ==================== -->
+  <section class="tab-section active" id="sec-0" data-t="INICIO">
+    <div class="svg-hero-wrapper" role="region" aria-label="Ilustración principal animada de Motion Graphics con IA">
+      <div class="svg-mount-node" id="svg-mount-home" role="img" aria-label="Escena interactiva del flujo de trabajo: extracción del ADN visual en Claude, generación de clips 9:16 de 8 segundos en Google Flow con el modelo Ovniflash y locución en Google AI Studio"></div>
+    </div>
+
+    <div class="svg-controls">
+      <button type="button" class="btn-secondary-action" id="ix">☰ Ver índice</button>
+      <button type="button" class="btn-secondary-action" id="btn-toggle-svg-home">⏸ Pausar/Reanudar SVG</button>
+    </div>
+
+    <!-- Título único en INICIO con "by Rubén Sbarsky" -->
+    <h1>Guía Definitiva de Motion Graphics con IA: Workflow Profesional con Prompt Maestro Gratis by Rubén Sbarsky</h1>
+
+    <div class="badge-row">
+      <span class="badge">100% Capas Gratuitas</span>
+      <span class="badge">Sin Conocimientos Previos</span>
+      <span class="badge">Faceless Content (Sin Mostrar Rostro)</span>
+      <span class="badge">Formato Vertical 9:16 y 16:9</span>
+    </div>
+
+    <div class="card card-highlight">
+      <h3>¿Qué vas a lograr con este tutorial interactivo?</h3>
+      <p>Aprenderás paso a paso, desde cero y sin necesidad de saber diseño gráfico ni animación tradicional, a construir piezas de <strong>Motion Graphics profesionales automatizadas con Inteligencia Artificial</strong> utilizando un <strong>Prompt Maestro</strong>.</p>
+      <p>En lugar de depender de plantillas rígidas, aprenderás a extraer el <strong>ADN Visual</strong> (paleta de colores, tipografías, movimiento y transiciones) de cualquier vídeo de referencia y aplicarlo a tus propios guiones en clips modulares de $8\text{ segundos}$.</p>
+    </div>
+
+    <div class="card">
+      <h3>Índice Maestro Jerárquico del Workflow</h3>
+      <ol>
+        <li><strong>Introducción y Fundamentos de Motion Graphics con IA:</strong> Qué son, el concepto de ADN Visual, creación de contenido sin mostrar el rostro (<em>Faceless Content</em>) y arquitectura del flujo gratuito.</li>
+        <li><strong>Requisitos Previos y Entorno de Trabajo:</strong> Matriz de herramientas en sus capas gratuitas (Pinterest, Claude, Google Flow, Google AI Studio, CapCut / Filmcraft).</li>
+        <li><strong>Fase 1 — Investigación y Curaduría en Pinterest:</strong> Búsqueda estratégica de referencias según el nicho y descarga de clips cortos.</li>
+        <li><strong>Fase 2 — Análisis de Estilo y Extracción del ADN Visual en Claude:</strong> Carga multimodal del vídeo y extracción de reglas estéticas.</li>
+        <li><strong>Fase 3 — Creación del Prompt Maestro y Desglose de Guion:</strong> Construcción del «Prompt de Prompts» y segmentación en escenas de $8\text{ segundos}$.</li>
+        <li><strong>Fase 4 — Generación de Clips Animados en Google Flow:</strong> Configuración de relación de aspecto $9:16$, modelo <em>Ovniflash</em>, prueba de réplica y generación por lotes con <em>Modo Agente</em>.</li>
+        <li><strong>Fase 5 — Sintetización de Voz en Off en Google AI Studio:</strong> Limpieza de acotaciones del guion, modelo <em>Gemini Flash</em> y selección de la voz <em>Pola</em> / <em>Fola</em>.</li>
+        <li><strong>Fase 6 — Montaje Final y Sincronización en Editor:</strong> Ensamblaje en CapCut o Filmcraft, ajuste al ritmo narrativo y exportación para Reels, Shorts y TikTok.</li>
+      </ol>
+    </div>
+
+    <div class="tab-footer-nav">
+      <button type="button" class="btn-nav-step next" onclick="go(1)">Siguiente: CONCEPTOS ➔</button>
+    </div>
+  </section>
+
+  <!-- ==================== PESTAÑA 1: CONCEPTOS ==================== -->
+  <section class="tab-section" id="sec-1" data-t="CONCEPTOS">
+    <h2>1. Conceptos Fundamentales y Requisitos Previos</h2>
+
+    <div class="card">
+      <h3>1.1. ¿Qué son los Motion Graphics y por qué automatizarlos con IA?</h3>
+      <ul>
+        <li><strong>QUÉ ES:</strong> Los <em>Motion Graphics</em> (gráficos en movimiento) son una disciplina del diseño audiovisual que dota de animación dinámica a elementos gráficos estáticos, textos, iconos y formas geométricas.</li>
+        <li><strong>PARA QUÉ SIRVE:</strong> Permiten explicar ideas complejas, retener la atención de la audiencia en redes sociales (Reels, TikTok, Shorts) y comunicar mensajes profesionales sin que el creador tenga que grabarse frente a una cámara.</li>
+        <li><strong>POR QUÉ IMPORTA AUTOMATIZARLOS:</strong> Tradicionalmente, animar un minuto de vídeo exigía dominar programas complejos y horas de trabajo manual. Con este flujo de trabajo basado en IA, la inteligencia artificial analiza el diseño y genera los clips mientras tú diriges el proceso mediante instrucciones de texto (<em>prompts</em>).</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>1.2. El Concepto de «ADN Visual» y el Contenido Faceless</h3>
+      <p>El <strong>ADN Visual</strong> es el código genético estético de una pieza audiovisual: su combinación exacta de paleta de colores, estilo tipográfico, velocidad de movimiento, composición espacial y tipo de transiciones.</p>
+      <p>Al extraer este ADN Visual mediante un modelo multimodal como <strong>Claude</strong>, superamos la limitación de las plantillas tradicionales (que solo permiten cambiar un texto fijo) y logramos generar animaciones completamente nuevas e ilimitadas bajo las mismas leyes de diseño, ideal para canales <strong>Faceless Content</strong> (contenido sin mostrar el rostro).</p>
+    </div>
+
+    <div class="card">
+      <h3>1.3. Matriz de Herramientas y Licencias (Capas 100% Gratuitas)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fase</th>
+              <th>Herramienta</th>
+              <th>Función en el Workflow</th>
+              <th>Licencia / Capa</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Fase 1</td>
+              <td><strong>Pinterest</strong></td>
+              <td>Catálogo visual para encontrar e inspirarse en estilos de animación de referencia.</td>
+              <td>Gratuita</td>
+            </tr>
+            <tr>
+              <td>Fases 2 y 3</td>
+              <td><strong>Claude (Anthropic)</strong></td>
+              <td>Análisis multimodal del vídeo adjunto, extracción del ADN visual y creación del Prompt Maestro.</td>
+              <td>Plan Gratuito operativo</td>
+            </tr>
+            <tr>
+              <td>Fase 4</td>
+              <td><strong>Google Flow</strong></td>
+              <td>Motor generativo de vídeo con IA (Modelo <em>Ovniflash</em> y <em>Modo Agente</em>) que crea clips de $8\text{ s}$.</td>
+              <td>Gratuita (créditos diarios)</td>
+            </tr>
+            <tr>
+              <td>Fase 5</td>
+              <td><strong>Google AI Studio</strong></td>
+              <td>Síntesis de voz en off profesional mediante el modelo <em>Gemini Flash</em> (Voz <em>Pola</em> / <em>Fola</em>).</td>
+              <td>Gratuita</td>
+            </tr>
+            <tr>
+              <td>Fase 6</td>
+              <td><strong>CapCut / Filmcraft</strong></td>
+              <td>Edición en línea de tiempo, sincronización audio/vídeo y exportación final.</td>
+              <td>Gratuitas</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>1.4. Glosario Técnico Esencial</h3>
+      <ul>
+        <li><strong>ADN Visual:</strong> Conjunto de reglas estéticas (colores, transiciones, formas, tipografía) que definen la identidad de una animación.</li>
+        <li><strong>Agent Mode (Modo Agente):</strong> Función de automatización en Google Flow que procesa una cola de varios prompts secuencialmente sin intervención manual constante.</li>
+        <li><strong>Aspect Ratio (Relación de Aspecto):</strong> Proporción entre ancho y alto del vídeo ($9:16$ para formato vertical móvil; $16:9$ para formato horizontal panorámico).</li>
+        <li><strong>Ovniflash (Omniflash):</strong> Modelo especializado de generación de vídeo dentro de Google Flow, idóneo para tareas multimodales y réplica fiel de estilos gráficos.</li>
+        <li><strong>Prompt Maestro:</strong> Instrucción plantilla («Prompt de Prompts») que encapsula las reglas de estilo y divide cualquier guion en escenas de $8\text{ segundos}$ coherentes.</li>
+      </ul>
+    </div>
+
+    <div class="tab-footer-nav">
+      <button type="button" class="btn-nav-step" onclick="go(0)">⬅ Anterior: INICIO</button>
+      <button type="button" class="btn-nav-step next" onclick="go(2)">Siguiente: PROCEDIMIENTO ➔</button>
+    </div>
+  </section>
+
+  <!-- ==================== PESTAÑA 2: PROCEDIMIENTO ==================== -->
+  <section class="tab-section" id="sec-2" data-t="PROCEDIMIENTO">
+    <h2>2. Procedimiento Completo Paso a Paso (Las 6 Fases)</h2>
+    <p>Sigue cada fase en orden secuencial. Cada paso contiene una única acción principal, su motivo técnico y el resultado esperado.</p>
+
+    <!-- FASE 1 -->
+    <div class="card">
+      <h3>FASE 1: Investigación y Curaduría de Referencias Visuales en Pinterest</h3>
+      <p><strong>Objetivo:</strong> Encontrar y descargar un vídeo corto de animación cuyo estilo estético queramos replicar en nuestro proyecto.</p>
+      <ol>
+        <li>
+          <strong>Acción:</strong> Entra en Pinterest y realiza una búsqueda de estilos de animación (por ejemplo, términos de diseño de <em>motion graphics</em> minimalistas, vectoriales o tipográficos acordes a tu temática).<br>
+          <em>Motivo:</em> Pinterest funciona como el catálogo de referencias visuales donde seleccionamos la estética base.<br>
+          <em>Resultado esperado:</em> Una lista de vídeos cortos de animación con alto atractivo visual.
+        </li>
+        <li>
+          <strong>Acción:</strong> Elige un vídeo de referencia de corta duración y estilo definido.<br>
+          <em>Motivo:</em> Cuanto más largo y complejo sea el vídeo de referencia, más tiempo tardará Claude en procesarlo en la siguiente fase.<br>
+          <em>Resultado esperado:</em> Un clip de referencia concreto seleccionado.
+        </li>
+        <li>
+          <strong>Acción:</strong> Descarga el vídeo de referencia a tu dispositivo en formato de vídeo estándar (MP4).<br>
+          <em>Motivo:</em> Necesitamos el archivo local para adjuntarlo directamente en el chat multimodal de Claude.<br>
+          <em>Resultado esperado:</em> Archivo de vídeo almacenado en tu móvil u ordenador listo para subir.
+        </li>
+      </ol>
+    </div>
+
+    <!-- FASE 2 -->
+    <div class="card">
+      <h3>FASE 2: Análisis de Estilo y Extracción del ADN Visual en Claude</h3>
+      <p><strong>Objetivo:</strong> Utilizar la capacidad multimodal gratuita de Claude para traducir el vídeo de referencia en reglas técnicas de diseño.</p>
+      <ol>
+        <li>
+          <strong>Acción:</strong> Abre Claude (Anthropic) con tu cuenta gratuita e inicia un nuevo chat.<br>
+          <em>Motivo:</em> El plan gratuito de Claude permite adjuntar archivos multimedia y analizar el lenguaje visual con alta precisión.<br>
+          <em>Resultado esperado:</em> Ventana de conversación limpia en Claude.
+        </li>
+        <li>
+          <strong>Acción:</strong> Pulsa el botón de adjuntar archivo y sube el vídeo de referencia descargado de Pinterest.<br>
+          <em>Motivo:</em> Claude debe inspeccionar los fotogramas, colores, tipografías y transiciones del vídeo.<br>
+          <em>Resultado esperado:</em> El archivo de vídeo aparece cargado en la barra de mensaje.
+        </li>
+        <li>
+          <strong>Acción:</strong> Copia y pega el <strong>Prompt 1 (Extracción de ADN Visual)</strong> y envíalo junto al vídeo.
+        </li>
+      </ol>
+
+      <div class="copy-box">
+        <div class="copy-header">
+          <span class="copy-label">Prompt 1 — Extracción de ADN Visual (Claude)</span>
+          <button type="button" class="btn-copy" data-copy-target="p-proc-1">COPIAR PROMPT</button>
+        </div>
+        <pre class="copy-content" id="p-proc-1">Analiza detalladamente este vídeo de referencia. Extrae su lenguaje visual completo: movimiento, transiciones, paleta de colores, tipografías, composición y estilo de diseño gráfico. Convierte todo este análisis en una instrucción técnica detallada para replicar exactamente su estilo estético.</pre>
+      </div>
+      <p><em>Resultado esperado:</em> Claude devuelve un documento técnico detallando la paleta cromática, el comportamiento de las transiciones, la tipografía y las leyes de composición del vídeo.</p>
+    </div>
+
+    <!-- FASE 3 -->
+    <div class="card">
+      <h3>FASE 3: Creación del Prompt Maestro y Desglose del Guion</h3>
+      <p><strong>Objetivo:</strong> Transformar el análisis estético en una plantilla reutilizable («Prompt de Prompts») y dividir nuestro guion en escenas modulares de $8\text{ segundos}$.</p>
+      <ol>
+        <li>
+          <strong>Acción:</strong> En el <strong>mismo hilo de conversación</strong> de Claude, envía el <strong>Prompt 2 (Creación del Prompt Maestro)</strong>.<br>
+          <em>Motivo:</em> Al mantener el mismo hilo, Claude conserva en memoria todas las reglas del ADN visual recién extraídas.
+        </li>
+      </ol>
+
+      <div class="copy-box">
+        <div class="copy-header">
+          <span class="copy-label">Prompt 2 — Creación del Prompt Maestro (Claude)</span>
+          <button type="button" class="btn-copy" data-copy-target="p-proc-2">COPIAR PROMPT</button>
+        </div>
+        <pre class="copy-content" id="p-proc-2">Utiliza todo el ADN visual y el análisis estético generado anteriormente para crear un Prompt Maestro. Este prompt debe actuar como una plantilla reutilizable aplicable a cualquier texto o guion narrativo, de modo que me divida el guion en secuencias de vídeo coherentes de 8 segundos manteniendo siempre exactamente el mismo estilo visual.</pre>
+      </div>
+
+      <ol start="2">
+        <li>
+          <strong>Acción:</strong> Una vez que Claude genere el Prompt Maestro, introduce tu guion narrativo usando el <strong>Prompt 3 (Procesamiento de Guion y Desglose en Clips)</strong>.<br>
+          <em>Motivo:</em> Segmentar el guion en clips de $8\text{ segundos}$ proporciona la cadencia ideal para vídeos cortos y permite regenerar un único clip si falla sin repetir todo el proyecto.
+        </li>
+      </ol>
+
+      <div class="copy-box">
+        <div class="copy-header">
+          <span class="copy-label">Prompt 3 — Desglose de Guion en Clips de 8s (Claude)</span>
+          <button type="button" class="btn-copy" data-copy-target="p-proc-3">COPIAR PROMPT</button>
+        </div>
+        <pre class="copy-content" id="p-proc-3">Aplica el Prompt Maestro al siguiente guion. Genera un mapa de secuencias ordenado y proporciona los prompts de generación visual detallados para cada clip de 8 segundos, manteniendo la coherencia estética definida:
+
+[INSERTAR AQUÍ EL TEXTO DEL GUION]</pre>
+      </div>
+      <p><em>Resultado esperado:</em> Una lista numerada de prompts visuales individuales (Escena 1, Escena 2, Escena 3...), cada uno diseñado para durar $8\text{ segundos}$ y con las reglas de estilo inyectadas.</p>
+    </div>
+
+    <!-- FASE 4 -->
+    <div class="card">
+      <h3>FASE 4: Generación de Clips Animados en Google Flow</h3>
+      <p><strong>Objetivo:</strong> Convertir los prompts de texto de cada escena en clips de vídeo MP4 utilizando el modelo <em>Ovniflash</em>.</p>
+      <ol>
+        <li>
+          <strong>Acción:</strong> Ingresa a Google Flow y crea un nuevo proyecto.<br>
+          <em>Resultado esperado:</em> Interfaz de generación de Google Flow activa.
+        </li>
+        <li>
+          <strong>Acción:</strong> Abre los ajustes de generación, selecciona <strong>Aspect Ratio `9:16`</strong> (formato vertical para Shorts/Reels/TikTok) y elige el modelo <strong>Ovniflash</strong>.<br>
+          <em>Motivo:</em> El modelo <em>Ovniflash</em> está optimizado para tareas multimodales y réplica fiel de estilos gráficos.<br>
+          <em>Resultado esperado:</em> Parámetros fijados en $9:16$ y modelo <em>Ovniflash</em>.
+        </li>
+        <li>
+          <strong>Acción:</strong> Ejecuta primero el <strong>Prompt 4 (Prueba Inicial de Réplica de Estilo)</strong> para validar que el estilo visual responde como deseas antes de gastar tus créditos diarios.
+        </li>
+      </ol>
+
+      <div class="copy-box">
+        <div class="copy-header">
+          <span class="copy-label">Prompt 4 — Prueba Inicial de Réplica (Google Flow)</span>
+          <button type="button" class="btn-copy" data-copy-target="p-proc-4">COPIAR PROMPT</button>
+        </div>
+        <pre class="copy-content" id="p-proc-4">Genera una escena de animación de prueba en estilo Motion Graphics con la siguiente identidad visual: animación vectorial plana, colores de alto contraste, movimiento fluido de elementos tipográficos y transiciones dinámicas según el análisis de referencia.</pre>
+      </div>
+
+      <ol start="4">
+        <li>
+          <strong>Acción:</strong> Elige el método de producción:
+          <ul>
+            <li><strong>Modo Manual (Secuencial):</strong> Pega los prompts de Claude uno por uno para supervisar cada clip y ahorrar créditos diarios.</li>
+            <li><strong>Modo Agente (Agent Mode por Lotes):</strong> Activa el <em>Modo Agente</em> y envía el <strong>Prompt 5</strong> con toda la lista de escenas para que Google Flow las ponga en cola y las renderice automáticamente sin audio.</li>
+          </ul>
+        </li>
+      </ol>
+
+      <div class="copy-box">
+        <div class="copy-header">
+          <span class="copy-label">Prompt 5 — Generación por Lotes en Modo Agente (Google Flow)</span>
+          <button type="button" class="btn-copy" data-copy-target="p-proc-5">COPIAR PROMPT</button>
+        </div>
+        <pre class="copy-content" id="p-proc-5">Crea todas las secuencias de vídeo correspondientes a los siguientes prompts sin voz y sin sonido, manteniendo el aspecto 9:16 y el estilo gráfico estandarizado:
+
+[INSERTAR LISTA DE PROMPTS DE CLIPS GENERADOS POR CLAUDE]</pre>
+      </div>
+      <p><em>Resultado esperado:</em> Todos los clips de $8\text{ segundos}$ descargados en formato MP4 manteniendo la misma estética.</p>
+    </div>
+
+    <!-- FASE 5 -->
+    <div class="card">
+      <h3>FASE 5: Sintetización de Voz en Off en Google AI Studio</h3>
+      <p><strong>Objetivo:</strong> Generar la locución profesional que narrará el guion mediante el modelo <em>Gemini Flash</em>.</p>
+      <ol>
+        <li>
+          <strong>Acción:</strong> Entra en Google AI Studio y selecciona el entorno multimodal / generación de audio con el modelo <strong>Gemini Flash</strong>.<br>
+          <em>Motivo:</em> Gemini Flash permite generar síntesis de voz natural de alta fidelidad de forma gratuita.
+        </li>
+        <li>
+          <strong>Acción:</strong> Limpia el texto del guion eliminando cualquier nota interna, acotación visual, marca de tiempo o texto entre corchetes que haya añadido Claude.<br>
+          <em>Motivo:</em> Si dejas indicaciones como <code>[Escena 1 - 0:00 a 0:08]</code>, el sintetizador las leerá en voz alta arruinando la locución.<br>
+          <em>Resultado esperado:</em> Texto plano únicamente con las frases que debe pronunciar el narrador.
+        </li>
+        <li>
+          <strong>Acción:</strong> Selecciona el perfil de voz <strong>Pola</strong> (mencionado en la lección como <em>Pola</em> / <em>Fola</em>), mantén la configuración de expresión por defecto sin alterarla y exporta el archivo de audio.<br>
+          <em>Motivo:</em> Alterar los parámetros de expresión sin experiencia introduce fluctuaciones innaturales o tonos robóticos.<br>
+          <em>Resultado esperado:</em> Archivo de audio limpio con la locución completa descargado en tu equipo.
+        </li>
+      </ol>
+    </div>
+
+    <!-- FASE 6 -->
+    <div class="card">
+      <h3>FASE 6: Montaje Final y Sincronización en CapCut o Filmcraft</h3>
+      <p><strong>Objetivo:</strong> Unir los clips de vídeo de $8\text{ segundos}$ con la locución de Google AI Studio y exportar el vídeo final.</p>
+      <ol>
+        <li>
+          <strong>Acción:</strong> Abre tu editor de vídeo gratuito preferido (<strong>CapCut</strong> o <strong>Filmcraft</strong>, este último con interfaz estilo Adobe Premiere Pro).
+        </li>
+        <li>
+          <strong>Acción:</strong> Importa los clips MP4 generados por Google Flow y el archivo de voz en off de Google AI Studio.
+        </li>
+        <li>
+          <strong>Acción:</strong> Coloca la pista de locución en la línea de tiempo y ajusta el recorte de los clips de vídeo para que cada cambio visual coincida con las pausas naturales de la voz (sin acelerar artificialmente el audio).<br>
+          <em>Consejo Pro:</em> Si notas un pequeño salto estético entre dos clips, aplica una transición suave de disolución cruzada (<em>crossfade</em>) de $0.2\text{ s}$ a $0.5\text{ s}$.
+        </li>
+        <li>
+          <strong>Acción:</strong> Exporta el proyecto final en formato vertical $9:16$ listo para publicar en Reels, YouTube Shorts o TikTok.
+        </li>
+      </ol>
+    </div>
+
+    <div class="tab-footer-nav">
+      <button type="button" class="btn-nav-step" onclick="go(1)">⬅ Anterior: CONCEPTOS</button>
+      <button type="button" class="btn-nav-step next" onclick="go(3)">Siguiente: PRÁCTICA ➔</button>
+    </div>
+  </section>
+
+  <!-- ==================== PESTAÑA 3: PRÁCTICA ==================== -->
+  <section class="tab-section" id="sec-3" data-t="PRÁCTICA">
+    <h2>3. Proyecto Integrador Paso a Paso y Autoevaluación</h2>
+
+    <div class="card card-highlight">
+      <h3>Caso Real del Tutorial: Vídeo sobre «El uso de la IA en el Trabajo»</h3>
+      <p>En esta práctica aplicarás el flujo completo para producir un vídeo corto sobre por qué muchos usuarios pierden tiempo al usar ChatGPT sin método.</p>
+    </div>
+
+    <div class="card">
+      <h3>Paso 1: Comparativa de Guion Incorrecto vs. Guion Depurado para Google AI Studio</h3>
+      <p>Antes de generar la voz con el perfil <strong>Pola</strong> en Google AI Studio, observa por qué es crítico limpiar el texto que entrega Claude:</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>❌ Guion Incorrecto (Con acotaciones de Claude)</th>
+              <th>✅ Guion Correcto (Texto limpio para locución)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[Escena 1 - 0:00 a 0:08 - Aparece icono de reloj rompiéndose] Mucha gente usa IA en su trabajo y no ahorra tiempo. [Transición rápida] ¿Entonces cuál es el problema?</code></td>
+              <td><code>Mucha gente usa IA en su trabajo y no ahorra tiempo. ¿Entonces cuál es el problema? Le pides a ChatGPT un correo o un informe y lo tienes en un minuto. Luego pasas 20 minutos corrigiendo datos inventados, ajustando el tono y rehaciendo partes.</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="copy-box">
+        <div class="copy-header">
+          <span class="copy-label">Prompt 6 / Texto Limpio del Caso Práctico para Google AI Studio</span>
+          <button type="button" class="btn-copy" data-copy-target="p-prac-6">COPIAR GUION LIMPIO</button>
+        </div>
+        <pre class="copy-content" id="p-prac-6">Mucha gente usa IA en su trabajo y no ahorra tiempo. ¿Entonces cuál es el problema? Le pides a ChatGPT un correo o un informe y lo tienes en un minuto. Luego pasas 20 minutos corrigiendo datos inventados, ajustando el tono y rehaciendo partes.</pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Paso 2: Mapa de Secuencias Modulares ($8\text{ segundos}$ por clip)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Clip</th>
+              <th>Duración</th>
+              <th>Fragmento de Locución (Voz Pola)</th>
+              <th>Acción Visual en Google Flow (Ovniflash 9:16)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Clip 01</strong></td>
+              <td>$0\text{ s} - 8\text{ s}$</td>
+              <td>«Mucha gente usa IA en su trabajo y no ahorra tiempo. ¿Entonces cuál es el problema?»</td>
+              <td>Animación vectorial de alto contraste: reloj digital frente a pantalla de trabajo con signo de interrogación dinámico.</td>
+            </tr>
+            <tr>
+              <td><strong>Clip 02</strong></td>
+              <td>$8\text{ s} - 16\text{ s}$</td>
+              <td>«Le pides a ChatGPT un correo o un informe y lo tienes en un minuto.»</td>
+              <td>Transición fluida hacia documento generándose a gran velocidad con indicador luminoso de $1\text{ min}$.</td>
+            </tr>
+            <tr>
+              <td><strong>Clip 03</strong></td>
+              <td>$16\text{ s} - 24\text{ s}$</td>
+              <td>«Luego pasas 20 minutos corrigiendo datos inventados, ajustando el tono y rehaciendo partes.»</td>
+              <td>Composición de bloques de texto desordenándose en rojo y barra de tiempo marcando $20\text{ min}$ de corrección manual.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Paso 3: Lista de Comprobación Interactiva del Proyecto (Progreso Guardado)</h3>
+      <p>Marca cada tarea a medida que completes tu propio vídeo. Tu avance se guarda automáticamente en este navegador:</p>
+      <div id="checklist-container">
+        <label class="checklist-item">
+          <input type="checkbox" data-check-id="chk-1">
+          <span>1. He descargado un vídeo corto de referencia visual desde Pinterest en formato MP4.</span>
+        </label>
+        <label class="checklist-item">
+          <input type="checkbox" data-check-id="chk-2">
+          <span>2. He subido el vídeo a Claude (plan gratuito) y ejecutado el Prompt 1 para extraer el ADN Visual.</span>
+        </label>
+        <label class="checklist-item">
+          <input type="checkbox" data-check-id="chk-3">
+          <span>3. En el mismo chat de Claude, he ejecutado el Prompt 2 para crear mi Prompt Maestro reutilizable.</span>
+        </label>
+        <label class="checklist-item">
+          <input type="checkbox" data-check-id="chk-4">
+          <span>4. He aplicado el Prompt 3 a mi guion para obtener los prompts divididos en clips de $8\text{ segundos}$.</span>
+        </label>
+        <label class="checklist-item">
+          <input type="checkbox" data-check-id="chk-5">
+          <span>5. En Google Flow, he configurado Aspect Ratio $9:16$, modelo Ovniflash y validado la prueba inicial (Prompt 4).</span>
+        </label>
+        <label class="checklist-item">
+          <input type="checkbox" data-check-id="chk-6">
+          <span>6. He generado todos los clips de vídeo (manualmente o con el Prompt 5 en Modo Agente sin sonido).</span>
+        </label>
+        <label class="checklist-item">
+          <input type="checkbox" data-check-id="chk-7">
+          <span>7. He limpiado las acotaciones del guion y generado la voz «Pola» en Google AI Studio con Gemini Flash.</span>
+        </label>
+        <label class="checklist-item">
+          <input type="checkbox" data-check-id="chk-8">
+          <span>8. He sincronizado los clips y la voz en CapCut o Filmcraft ajustando los cortes a las pausas de la locución.</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="tab-footer-nav">
+      <button type="button" class="btn-nav-step" onclick="go(2)">⬅ Anterior: PROCEDIMIENTO</button>
+      <button type="button" class="btn-nav-step next" onclick="go(4)">Siguiente: PROMPTS ➔</button>
+    </div>
+  </section>
+
+  <!-- ==================== PESTAÑA 4: PROMPTS ==================== -->
+  <section class="tab-section" id="sec-4" data-t="PROMPTS">
+    <h2>4. Repositorio Completo y Categorizado de Prompts</h2>
+    <p>En esta pestaña tienes reunidos absolutamente todos los prompts del tutorial, listos para copiar con un toque, junto con la explicación exacta de en qué herramienta y en qué momento del flujo de trabajo se emplean.</p>
+
+    <!-- PROMPT 1 -->
+    <div class="card">
+      <span class="badge">Categoría 1: Análisis y Extracción de ADN Visual</span>
+      <h3>Prompt 1: Extracción de ADN Visual de Vídeo de Referencia</h3>
+      <ul>
+        <li><strong>Dónde se emplea (Herramienta):</strong> Claude (Anthropic).</li>
+        <li><strong>Momento exacto de uso:</strong> En la Fase 2, inmediatamente después de adjuntar el archivo de vídeo de referencia descargado desde Pinterest.</li>
+        <li><strong>Función técnica:</strong> Analizar el contenido multimodal del vídeo y extraer sus leyes estéticas (movimiento, transiciones, paleta de colores, tipografías y composición) en una instrucción técnica reproducible.</li>
+      </ul>
+      <div class="copy-box">
+        <div class="copy-header">
+          <span class="copy-label">Prompt 1 — Extracción de ADN Visual</span>
+          <button type="button" class="btn-copy" data-copy-target="rep-p1">COPIAR PROMPT</button>
+        </div>
+        <pre class="copy-content" id="rep-p1">Analiza detalladamente este vídeo de referencia. Extrae su lenguaje visual completo: movimiento, transiciones, paleta de colores, tipografías, composición y estilo de diseño gráfico. Convierte todo este análisis en una instrucción técnica detallada para replicar exactamente su estilo estético.</pre>
+      </div>
+    </div>
+
+    <!-- PROMPT 2 -->
+    <div class="card">
+      <span class="badge">Categoría 2: Prompt Maestro y Desglosador</span>
+      <h3>Prompt 2: Creación del Prompt Maestro («Prompt de Prompts»)</h3>
+      <ul>
+        <li><strong>Dónde se emplea (Herramienta):</strong> Claude (Anthropic).</li>
+        <li><strong>Momento exacto de uso:</strong> Al inicio de la Fase 3, dentro del <strong>mismo hilo de conversación</strong> donde Claude acaba de entregar el análisis de ADN visual.</li>
+        <li><strong>Función técnica:</strong> Transformar el análisis estético en una plantilla estandarizada y reutilizable capaz de dividir cualquier guion futuro en clips coherentes de $8\text{ segundos}$.</li>
+      </ul>
+      <div class="copy-box">
+        <div class="copy-header">
+          <span class="copy-label">Prompt 2 — Creación del Prompt Maestro</span>
+          <button type="button" class="btn-copy" data-copy-target="rep-p2">COPIAR PROMPT</button>
+        </div>
+        <pre class="copy-content" id="rep-p2">Utiliza todo el ADN visual y el análisis estético generado anteriormente para crear un Prompt Maestro. Este prompt debe actuar como una plantilla reutilizable aplicable a cualquier texto o guion narrativo, de modo que me divida el guion en secuencias de vídeo coherentes de 8 segundos manteniendo siempre exactamente el mismo estilo visual.</pre>
+      </div>
+    </div>
+
+    <!-- PROMPT 3 -->
+    <div class="card">
+      <span class="badge">Categoría 2: Prompt Maestro y Desglosador</span>
+      <h3>Prompt 3: Procesamiento de Guion y Desglose en Clips</h3>
+      <ul>
+        <li><strong>Dónde se emplea (Herramienta):</strong> Claude (Anthropic).</li>
+        <li><strong>Momento exacto de uso:</strong> En la Fase 3, una vez creado el Prompt Maestro y teniendo listo el texto del guion definitivo del proyecto.</li>
+        <li><strong>Función técnica:</strong> Generar el mapa de secuencias ordenado y redactar los prompts visuales individuales para cada clip de $8\text{ segundos}$ que luego se enviarán a Google Flow.</li>
+      </ul>
+      <div class="copy-box">
+        <div class="copy-header">
+          <span class="copy-label">Prompt 3 — Procesamiento de Guion y Desglose</span>
+          <button type="button" class="btn-copy" data-copy-target="rep-p3">COPIAR PROMPT</button>
+        </div>
+        <pre class="copy-content" id="rep-p3">Aplica el Prompt Maestro al siguiente guion. Genera un mapa de secuencias ordenado y proporciona los prompts de generación visual detallados para cada clip de 8 segundos, manteniendo la coherencia estética definida:
+
+[INSERTAR AQUÍ EL TEXTO DEL GUION]</pre>
+      </div>
+    </div>
+
+    <!-- PROMPT 4 -->
+    <div class="card">
+      <span class="badge">Categoría 3: Generación de Vídeo en Google Flow</span>
+      <h3>Prompt 4: Prueba Inicial de Réplica de Estilo</h3>
+      <ul>
+        <li><strong>Dónde se emplea (Herramienta):</strong> Google Flow (configurado con el modelo <em>Ovniflash</em> y Aspect Ratio $9:16$).</li>
+        <li><strong>Momento exacto de uso:</strong> Al comienzo de la Fase 4, antes de lanzar la producción completa de todos los clips del guion.</li>
+        <li><strong>Función técnica:</strong> Verificar con un único renderizado que Google Flow interpreta fielmente la densidad gráfica, colores y movimiento deseados sin arriesgar todos los puntos diarios.</li>
+      </ul>
+      <div class="copy-box">
+        <div class="copy-header">
+          <span class="copy-label">Prompt 4 — Prueba Inicial de Réplica</span>
+          <button type="button" class="btn-copy" data-copy-target="rep-p4">COPIAR PROMPT</button>
+        </div>
+        <pre class="copy-content" id="rep-p4">Genera una escena de animación de prueba en estilo Motion Graphics con la siguiente identidad visual: animación vectorial plana, colores de alto contraste, movimiento fluido de elementos tipográficos y transiciones dinámicas según el análisis de referencia.</pre>
+      </div>
+    </div>
+
+    <!-- PROMPT 5 -->
+    <div class="card">
+      <span class="badge">Categoría 3: Generación de Vídeo en Google Flow</span>
+      <h3>Prompt 5: Generación por Lotes en Modo Agente (Sin Audio)</h3>
+      <ul>
+        <li><strong>Dónde se emplea (Herramienta):</strong> Google Flow (con el <em>Modo Agente / Agent Mode</em> activado).</li>
+        <li><strong>Momento exacto de uso:</strong> En la Fase 4, cuando el estilo ya ha sido validado y se desea automatizar en cola la creación de todas las escenas del guion.</li>
+        <li><strong>Función técnica:</strong> Ordenar al Modo Agente que procese secuencialmente todos los prompts de clips sin voz y sin sonido manteniendo el formato $9:16$.</li>
+      </ul>
+      <div class="copy-box">
+        <div class="copy-header">
+          <span class="copy-label">Prompt 5 — Generación por Lotes en Modo Agente</span>
+          <button type="button" class="btn-copy" data-copy-target="rep-p5">COPIAR PROMPT</button>
+        </div>
+        <pre class="copy-content" id="rep-p5">Crea todas las secuencias de vídeo correspondientes a los siguientes prompts sin voz y sin sonido, manteniendo el aspecto 9:16 y el estilo gráfico estandarizado:
+
+[INSERTAR LISTA DE PROMPTS DE CLIPS GENERADOS POR CLAUDE]</pre>
+      </div>
+    </div>
+
+    <!-- PROMPT 6 -->
+    <div class="card">
+      <span class="badge">Categoría 4: Síntesis de Voz en Google AI Studio</span>
+      <h3>Prompt 6 / Texto Limpio para Locución</h3>
+      <ul>
+        <li><strong>Dónde se emplea (Herramienta):</strong> Google AI Studio (Modelo <em>Gemini Flash</em>, seleccionando la voz <em>Pola</em> / <em>Fola</em>).</li>
+        <li><strong>Momento exacto de uso:</strong> En la Fase 5, tras haber eliminado todas las notas internas, corchetes y acotaciones escénicas generadas por Claude.</li>
+        <li><strong>Función técnica:</strong> Sintetizar la pista de voz en off limpia y natural que servirá como columna vertebral del montaje en CapCut o Filmcraft.</li>
+      </ul>
+      <div class="copy-box">
+        <div class="copy-header">
+          <span class="copy-label">Prompt 6 — Texto Limpio para Locución (Google AI Studio)</span>
+          <button type="button" class="btn-copy" data-copy-target="rep-p6">COPIAR PROMPT</button>
+        </div>
+        <pre class="copy-content" id="rep-p6">Mucha gente usa IA en su trabajo y no ahorra tiempo. ¿Entonces cuál es el problema? Le pides a ChatGPT un correo o un informe y lo tienes en un minuto. Luego pasas 20 minutos corrigiendo datos inventados, ajustando el tono y rehaciendo partes.</pre>
+      </div>
+    </div>
+
+    <div class="tab-footer-nav">
+      <button type="button" class="btn-nav-step" onclick="go(3)">⬅ Anterior: PRÁCTICA</button>
+      <button type="button" class="btn-nav-step next" onclick="go(5)">Siguiente: 33 Preguntas (Q&amp;A) ➔</button>
+    </div>
+  </section>
+
+  <!-- ==================== PESTAÑA 5: 33 Preguntas (Q&A) ==================== -->
+  <section class="tab-section" id="sec-5" data-t="33 Preguntas (Q&A)">
+    <h2>5. Banco de 33 Preguntas y Respuestas Estructuradas (Q&amp;A)</h2>
+    <p>Explora las 33 preguntas y respuestas oficiales ordenadas por nivel de dificultad: <strong>Nivel 1 (Básico)</strong>, <strong>Nivel 2 (Avanzado)</strong> y <strong>Nivel 3 (PRO)</strong>.</p>
+
+    <div class="svg-controls">
+      <button type="button" class="btn-secondary-action" id="btn-expand-all-qa">Abrir todas las respuestas</button>
+      <button type="button" class="btn-secondary-action" id="btn-collapse-all-qa">Cerrar todas</button>
+    </div>
+
+    <!-- NIVEL 1: BÁSICO (1 a 11) -->
+    <div class="card">
+      <span class="badge level-1">NIVEL 1 — Nivel Básico (Preguntas 1 a 11)</span>
+      <h3>Fundamentos y Herramientas del Flujo Gratuito</h3>
+
+      <details class="qa-item" open>
+        <summary>1. ¿Es necesario tener conocimientos previos de diseño gráfico o animación para aplicar este workflow?</summary>
+        <div class="qa-body">No. El procedimiento está diseñado para principiantes absolutos. La inteligencia artificial se encarga de analizar el diseño y generar los clips; el usuario solo debe guiar el proceso mediante los prompts.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>2. ¿Tengo que pagar por alguna de las herramientas utilizadas en esta guía?</summary>
+        <div class="qa-body">No. Todas las herramientas explicadas (Pinterest, Claude, Google Flow, Google AI Studio, CapCut y Filmcraft) cuentan con opciones o capas gratuitas operativas.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>3. ¿Qué es Pinterest y qué papel cumple en el proceso?</summary>
+        <div class="qa-body">Pinterest actúa como el catálogo de referencias visuales. Se utiliza al inicio para seleccionar el estilo de animación que servirá de inspiración al proyecto.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>4. ¿Qué es el "ADN Visual" de un vídeo?</summary>
+        <div class="qa-body">Es el código genético estético de una pieza audiovisual: sus paletas de color, estilo de tipografía, tipos de transiciones, elementos gráficos y velocidad de movimiento.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>5. ¿Por qué se utiliza Claude en lugar de otros modelos de lenguaje?</summary>
+        <div class="qa-body">Porque el plan gratuito de Claude permite adjuntar archivos de vídeo y procesar de forma precisa lenguaje multimodal para extraer reglas estéticas avanzadas.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>6. ¿Qué función cumple Google Flow dentro de este flujo de trabajo?</summary>
+        <div class="qa-body">Google Flow es el motor de generación de vídeo impulsado por IA que convierte los prompts de texto generados por Claude en los clips animados finales.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>7. ¿Qué relación de aspecto (Aspect Ratio) se debe seleccionar para crear Shorts o Reels?</summary>
+        <div class="qa-body">Se debe seleccionar la relación de aspecto <code>9:16</code> ($9:16$), que corresponde al formato vertical estándar para dispositivos móviles.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>8. ¿Para qué se utiliza Google AI Studio?</summary>
+        <div class="qa-body">Se utiliza para generar la voz en off o locución profesional que narrará el guion del vídeo, utilizando modelos avanzados como <em>Gemini Flash</em>.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>9. ¿Qué perfil de voz se menciona en la lección práctica dentro de Google AI Studio?</summary>
+        <div class="qa-body">Se menciona el perfil de voz femenina/masculina <strong>Pola</strong> / <strong>Fola</strong>.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>10. ¿Qué programas de edición de vídeo gratuitos se recomiendan para el montaje?</summary>
+        <div class="qa-body">Se recomiendan CapCut y Filmcraft.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>11. ¿Es obligatorio mostrar el rostro en los vídeos creados con esta técnica?</summary>
+        <div class="qa-body">No. Esta metodología es especialmente eficaz para crear contenido automatizado sin mostrar el rostro (<em>faceless content</em>).</div>
+      </details>
+    </div>
+
+    <!-- NIVEL 2: AVANZADO (12 a 22) -->
+    <div class="card">
+      <span class="badge level-2">NIVEL 2 — Nivel Avanzado (Preguntas 12 a 22)</span>
+      <h3>Control Modular, Modelo Ovniflash y Modo Agente</h3>
+
+      <details class="qa-item">
+        <summary>12. ¿Cómo garantiza el Prompt Maestro la coherencia visual entre clips diferentes?</summary>
+        <div class="qa-body">El Prompt Maestro encapsula las reglas fijas de estilo (colores, transiciones, formas) extraídas en el análisis de ADN visual e inyecta dichas restricciones en el prompt de cada escena individual.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>13. ¿Por qué es recomendable segmentar el guion en clips de 8 segundos?</summary>
+        <div class="qa-body">Porque la duración de $8\text{ segundos}$ ofrece una cadencia narrativa ideal para plataformas de vídeo corto y permite un control modular preciso ante eventuales fallos de generación.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>14. ¿Qué es el modelo Ovniflash en Google Flow y por qué se selecciona?</summary>
+        <div class="qa-body">Es un modelo especializado de IA en Google Flow optimizado para tareas multimodales y generación de vídeo, garantizando alta fidelidad al interpretar estilos gráficos específicos.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>15. ¿Qué ventaja operativa ofrece el Modo Agente (Agent Mode) en Google Flow?</summary>
+        <div class="qa-body">Permite enviar múltiples prompts de clips de forma simultánea, poniéndolos en cola para que la IA los genere automáticamente sin necesidad de introducirlos uno a uno.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>16. ¿Cuál es el principal inconveniente de abusar del Modo Agente en Google Flow?</summary>
+        <div class="qa-body">Consume los puntos de crédito diarios a mayor velocidad, lo que puede agotar la cuota de generación antes de terminar el proyecto.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>17. ¿Qué debe hacerse con el texto del guion antes de pegarlo en Google AI Studio para sintetizar la voz?</summary>
+        <div class="qa-body">Se deben eliminar todas las notas internas, acotaciones visuales, marcas de tiempo y corchetes agregados por Claude, dejando únicamente el texto limpio que será locutado.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>18. ¿Por qué es desaconsejable alterar la configuración de "expresión" al sintetizar la voz en Google AI Studio?</summary>
+        <div class="qa-body">Porque modificar parámetros avanzados sin experiencia previa puede introducir distorsiones robóticas o fluctuaciones innaturales en el tono de la voz.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>19. ¿Qué ventaja ofrece Filmcraft respecto a otros editores de vídeo tradicionales?</summary>
+        <div class="qa-body">Ofrece una interfaz y capacidades de edición avanzadas similares a software profesional como Adobe Premiere Pro, pero de forma totalmente gratuita.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>20. Si un clip de 8 segundos generado por Google Flow presenta un error visual, ¿es necesario repetir todo el proyecto?</summary>
+        <div class="qa-body">No. Gracias a la estructura modular, solo se debe regenerar el prompt del clip afectado en Google Flow y sustituir ese archivo MP4 específico en la línea de tiempo.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>21. ¿Cómo influye la duración del vídeo de referencia descargado de Pinterest en el análisis de Claude?</summary>
+        <div class="qa-body">A mayor duración y complejidad del vídeo de referencia, mayor será el tiempo que tardará Claude en analizar el archivo. Se recomienda usar clips cortos.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>22. ¿Se pueden reutilizar las plantillas de Prompt Maestro creadas para un proyecto en guiones de temáticas totalmente distintas?</summary>
+        <div class="qa-body">Sí. El Prompt Maestro aplica la misma estética visual a cualquier texto, permitiendo crear una serie homogénea de vídeos sobre temas variados manteniendo la identidad gráfica de marca.</div>
+      </details>
+    </div>
+
+    <!-- NIVEL 3: PRO (23 a 33) -->
+    <div class="card">
+      <span class="badge level-3">NIVEL 3 — Nivel PRO (Preguntas 23 a 33)</span>
+      <h3>Escalado de Agencia, Control de Alucinaciones y Coherencia de Marca</h3>
+
+      <details class="qa-item">
+        <summary>23. ¿De qué manera se contrarresta la aleatoriedad (hallucination) de la IA en la generación de imágenes y movimiento?</summary>
+        <div class="qa-body">Fijando los parámetros estéticos en el Prompt Maestro e imponiendo restricciones de estilo explícitas (paleta de colores, tipografía, composición) en cada iteración de prompt.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>24. ¿Qué estrategia de gestión de cuotas debe aplicarse si se trabaja en proyectos comerciales con Google Flow?</summary>
+        <div class="qa-body">Se debe realizar una fase previa de pruebas en generación manual clip a clip para afinar el prompt, y solo activar el Modo Agente cuando las instrucciones estén completamente validadas.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>25. En caso de requerir un formato horizontal (16:9) para vídeos largos de YouTube, ¿qué ajustes deben modificarse?</summary>
+        <div class="qa-body">Solo es necesario cambiar el parámetro de Aspect Ratio en la configuración de Google Flow a <code>16:9</code> ($16:9$) y ajustar la composición del prompt maestro para formatos panorámicos.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>26. ¿Cómo se puede lograr que la locución de Google AI Studio encaje con los cortes de escena sin alterar la velocidad del audio?</summary>
+        <div class="qa-body">Ajustando la duración y el recorte de los clips de vídeo en la línea de tiempo del editor para que las transiciones de imagen coincidan exactamente con las pausas naturales de la voz.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>27. ¿Es posible combinar animación de IA con elementos estáticos corporativos (como logotipos vectoriales)?</summary>
+        <div class="qa-body">Sí. En la fase de montaje en CapCut/Filmcraft, se pueden agregar superposiciones de imagen (PNG con transparencia) sobre los clips de vídeo generados por la IA.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>28. ¿Qué diferencia existe entre clonar un vídeo de plantilla tradicional y utilizar la extracción de ADN visual?</summary>
+        <div class="qa-body">Las plantillas tradicionales limitan la personalización a cambiar textos dentro de estructuras fijas; la extracción de ADN visual genera animación completamente nueva e ilimitada bajo las mismas leyes de diseño.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>29. ¿Qué técnica permite solucionar pequeños saltos estéticos entre clips consecutivos?</summary>
+        <div class="qa-body">Añadir transiciones suaves de disolución cruzada (<em>crossfade</em>) de $0.2\text{ s}$ a $0.5\text{ segundos}$ entre los clips en la pista de edición de vídeo.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>30. ¿Qué se debe hacer si Claude alcanza el límite de mensajes del plan gratuito durante la fase de creación del Prompt Maestro?</summary>
+        <div class="qa-body">Se puede esperar a la renovación del límite temporal o continuar el proceso en otro modelo con capa gratuita, reutilizando el análisis de texto previamente obtenido.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>31. ¿Cómo se asegura que la paleta de colores del vídeo generado coincida con la identidad de marca de un cliente?</summary>
+        <div class="qa-body">Especificando los valores hex de los colores principales en la sección de estilo del Prompt Maestro que se introduce en Google Flow.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>32. ¿Cuál es el procedimiento técnico para escalar esta producción a un flujo de trabajo de agencia?</summary>
+        <div class="qa-body">Crear una biblioteca de Prompts Maestros categorizados por estilo (vectorial, 3D, retro, minimalista) y automatizar el desglosado de guiones para su posterior renderizado en lote.</div>
+      </details>
+
+      <details class="qa-item">
+        <summary>33. ¿Qué métrica visual determina el éxito de la réplica del estilo visual antes de pasar a la fase de producción masiva?</summary>
+        <div class="qa-body">La similitud en la densidad gráfica, la coherencia cromática y el comportamiento de la velocidad en las transiciones de la prueba de réplica inicial respecto a la referencia de Pinterest.</div>
+      </details>
+    </div>
+
+    <div class="tab-footer-nav">
+      <button type="button" class="btn-nav-step" onclick="go(4)">⬅ Anterior: PROMPTS</button>
+      <button type="button" class="btn-nav-step next" onclick="go(6)">Siguiente: ERRORES ➔</button>
+    </div>
+  </section>
+
+  <!-- ==================== PESTAÑA 6: ERRORES ==================== -->
+  <section class="tab-section" id="sec-6" data-t="ERRORES">
+    <h2>6. Automatización, Gestión de Créditos y Resolución de Errores</h2>
+
+    <div class="card">
+      <h3>6.1. Matriz de Problemas Comunes y Soluciones (Troubleshooting)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Problema Detectado</th>
+              <th>Causa Raíz</th>
+              <th>Solución Accionable</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>La voz de Google AI Studio lee frases como «Escena 1» o «Transición»</strong></td>
+              <td>Se pegó el guion directamente desde Claude sin limpiar las acotaciones escénicas ni los corchetes.</td>
+              <td>Elimina todas las notas entre corchetes, marcas de tiempo y descripciones visuales antes de sintetizar con la voz <em>Pola</em>.</td>
+            </tr>
+            <tr>
+              <td><strong>La voz suena robótica o con fluctuaciones extrañas</strong></td>
+              <td>Se modificaron manualmente los controles avanzados de «expresión» en Google AI Studio.</td>
+              <td>Restablece la configuración de expresión a sus valores predeterminados y vuelve a generar el audio con el modelo <em>Gemini Flash</em>.</td>
+            </tr>
+            <tr>
+              <td><strong>Se agotaron los puntos diarios de Google Flow antes de terminar</strong></td>
+              <td>Se activó el <em>Modo Agente</em> directamente sin haber validado antes el estilo con un clip individual.</td>
+              <td>Realiza siempre la prueba inicial (Prompt 4) en modo manual y solo activa el <em>Modo Agente</em> cuando el estilo esté 100% verificado.</td>
+            </tr>
+            <tr>
+              <td><strong>Un clip de 8 segundos tiene un fallo visual o incoherencia</strong></td>
+              <td>Aleatoriedad puntual del modelo generativo en esa escena concreta.</td>
+              <td>No repitas todo el vídeo. Regenera únicamente el prompt de ese clip de $8\text{ s}$ y reemplaza ese archivo MP4 en CapCut o Filmcraft.</td>
+            </tr>
+            <tr>
+              <td><strong>Claude tarda demasiado tiempo en analizar el vídeo de Pinterest</strong></td>
+              <td>El vídeo de referencia descargado es demasiado largo o pesado.</td>
+              <td>Utiliza clips de referencia breves y concisos para acelerar la extracción multimodal del ADN visual.</td>
+            </tr>
+            <tr>
+              <td><strong>Se percibe un corte brusco entre dos clips consecutivos</strong></td>
+              <td>Diferencia sutil de encuadre entre el final del clip $N$ y el inicio del clip $N+1$.</td>
+              <td>Aplica una transición de disolución cruzada (<em>crossfade</em>) de $0.2\text{ s}$ a $0.5\text{ s}$ en la línea de tiempo del editor.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>6.2. Trade-offs entre Generación Individual y Modo Agente</h3>
+      <ul>
+        <li><strong>Generación Individual (Clip a Clip):</strong> Menor consumo de puntos diarios, control total para ajustar un prompt si una escena no convence. Recomendado para pruebas y proyectos con cuota ajustada.</li>
+        <li><strong>Modo Agente (Agent Mode en Lote):</strong> Máxima velocidad operativa al encolar todos los clips sin sonido de una sola vez, pero consume los créditos diarios rápidamente. Úsalo solo con Prompts Maestros ya validados.</li>
+      </ul>
+    </div>
+
+    <div class="tab-footer-nav">
+      <button type="button" class="btn-nav-step" onclick="go(5)">⬅ Anterior: 33 Preguntas (Q&amp;A)</button>
+      <button type="button" class="btn-nav-step next" onclick="go(7)">Siguiente: RESUMEN ➔</button>
+    </div>
+  </section>
+
+  <!-- ==================== PESTAÑA 7: RESUMEN ==================== -->
+  <section class="tab-section" id="sec-7" data-t="RESUMEN">
+    <h2>7. Resumen Ejecutivo por Capítulo</h2>
+
+    <div class="card">
+      <h3>Síntesis del Workflow de Agencia en 6 Puntos Clave</h3>
+      <ol>
+        <li><strong>Curaduría Visual (Pinterest):</strong> Todo gran vídeo de Motion Graphics comienza eligiendo una referencia corta y potente en Pinterest que defina el norte estético.</li>
+        <li><strong>Extracción del ADN Visual (Claude):</strong> El plan gratuito de Claude analiza el vídeo adjunto y traduce sus colores, tipografías, ritmo y transiciones en reglas técnicas precisas (Prompt 1).</li>
+        <li><strong>Estandarización con Prompt Maestro (Claude):</strong> Con el Prompt 2 creamos una plantilla reutilizable («Prompt de Prompts») y con el Prompt 3 dividimos cualquier guion en escenas modulares de $8\text{ segundos}$.</li>
+        <li><strong>Producción Visual 9:16 (Google Flow):</strong> Configurando la relación de aspecto en $9:16$ y el modelo <em>Ovniflash</em>, validamos el estilo con una prueba (Prompt 4) y generamos los clips manualmente o en lote mediante el <em>Modo Agente</em> (Prompt 5).</li>
+        <li><strong>Locución Profesional (Google AI Studio):</strong> Limpiamos el guion de toda acotación (Prompt 6) y generamos la narración con el modelo <em>Gemini Flash</em> y el perfil de voz <em>Pola</em> / <em>Fola</em> sin tocar los ajustes de expresión.</li>
+        <li><strong>Montaje y Sincronización (CapCut / Filmcraft):</strong> Ensamblamos los clips de $8\text{ segundos}$ ajustando los cortes visuales a las pausas naturales de la voz y aplicamos <em>crossfades</em> de $0.2\text{ s} - 0.5\text{ s}$ cuando sea necesario.</li>
+      </ol>
+    </div>
+
+    <div class="tab-footer-nav">
+      <button type="button" class="btn-nav-step" onclick="go(6)">⬅ Anterior: ERRORES</button>
+      <button type="button" class="btn-nav-step next" onclick="go(8)">Siguiente: FUENTES ➔</button>
+    </div>
+  </section>
+
+  <!-- ==================== PESTAÑA 8: FUENTES ==================== -->
+  <section class="tab-section" id="sec-8" data-t="FUENTES">
+    <h2>8. Fuentes Fiables y Enlaces Oficiales de las Herramientas</h2>
+    <p>El contenido de este tutorial se basa fielmente en el workflow documentado y en las plataformas oficiales que integran el ecosistema de producción. Todos los enlaces incluyen su dirección copiable y el botón obligatorio <strong>«Abrir enlace en nueva ventana»</strong>.</p>
+
+    <div class="card">
+      <h3>Fuente Principal del Workflow</h3>
+      <p><strong>Vídeo Tutorial:</strong> <em>«Motion graphics con IA: Cómo crearlos con un prompt maestro (gratis)»</em> — Canal de YouTube de David Zamora (Documentación técnica por Rubén Sbarsky).</p>
+      <div class="url-card">
+        <div class="url-string" id="url-yt">https://www.youtube.com/results?search_query=David+Zamora+Motion+graphics+con+IA+prompt+maestro</div>
+        <div class="url-actions">
+          <a href="https://www.youtube.com/results?search_query=David+Zamora+Motion+graphics+con+IA+prompt+maestro" target="_blank" rel="noopener noreferrer" class="btn-ext-link">Abrir enlace en nueva ventana ↗</a>
+          <button type="button" class="btn-copy" data-copy-target="url-yt">COPIAR URL</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Plataformas Oficiales de Investigación, IA y Edición</h3>
+
+      <h4>1. Pinterest (Catálogo de Referencias Visuales — Fase 1)</h4>
+      <div class="url-card">
+        <div class="url-string" id="url-pin">https://www.pinterest.com/</div>
+        <div class="url-actions">
+          <a href="https://www.pinterest.com/" target="_blank" rel="noopener noreferrer" class="btn-ext-link">Abrir enlace en nueva ventana ↗</a>
+          <button type="button" class="btn-copy" data-copy-target="url-pin">COPIAR URL</button>
+        </div>
+      </div>
+
+      <h4>2. Claude de Anthropic (Extracción de ADN Visual y Prompt Maestro — Fases 2 y 3)</h4>
+      <div class="url-card">
+        <div class="url-string" id="url-claude">https://claude.ai/</div>
+        <div class="url-actions">
+          <a href="https://claude.ai/" target="_blank" rel="noopener noreferrer" class="btn-ext-link">Abrir enlace en nueva ventana ↗</a>
+          <button type="button" class="btn-copy" data-copy-target="url-claude">COPIAR URL</button>
+        </div>
+      </div>
+
+      <h4>3. Google Flow / Labs Google (Generación de Clips con Modelo Ovniflash — Fase 4)</h4>
+      <div class="url-card">
+        <div class="url-string" id="url-flow">https://labs.google/fx/es/tools/flow</div>
+        <div class="url-actions">
+          <a href="https://labs.google/fx/es/tools/flow" target="_blank" rel="noopener noreferrer" class="btn-ext-link">Abrir enlace en nueva ventana ↗</a>
+          <button type="button" class="btn-copy" data-copy-target="url-flow">COPIAR URL</button>
+        </div>
+      </div>
+
+      <h4>4. Google AI Studio (Locución con Modelo Gemini Flash y Voz Pola — Fase 5)</h4>
+      <div class="url-card">
+        <div class="url-string" id="url-aistudio">https://aistudio.google.com/</div>
+        <div class="url-actions">
+          <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" class="btn-ext-link">Abrir enlace en nueva ventana ↗</a>
+          <button type="button" class="btn-copy" data-copy-target="url-aistudio">COPIAR URL</button>
+        </div>
+      </div>
+
+      <h4>5. CapCut (Editor de Vídeo Gratuito — Fase 6)</h4>
+      <div class="url-card">
+        <div class="url-string" id="url-capcut">https://www.capcut.com/</div>
+        <div class="url-actions">
+          <a href="https://www.capcut.com/" target="_blank" rel="noopener noreferrer" class="btn-ext-link">Abrir enlace en nueva ventana ↗</a>
+          <button type="button" class="btn-copy" data-copy-target="url-capcut">COPIAR URL</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-footer-nav">
+      <button type="button" class="btn-nav-step" onclick="go(7)">⬅ Anterior: RESUMEN</button>
+      <button type="button" class="btn-nav-step next" onclick="go(9)">Siguiente: CRÉDITOS ➔</button>
+    </div>
+  </section>
+
+  <!-- ==================== PESTAÑA 9: CRÉDITOS ==================== -->
+  <section class="tab-section" id="sec-9" data-t="CRÉDITOS">
+    <!-- Orden obligatorio: 1. Título de la sección -->
+    <h2>9. CRÉDITOS</h2>
+
+    <!-- Orden obligatorio: 2. SVG animado compartido con INICIO (en primera pantalla) -->
+    <div class="svg-hero-wrapper" role="region" aria-label="Ilustración animada compartida en Créditos">
+      <div class="svg-mount-node" id="svg-mount-credits" role="img" aria-label="Ilustración vectorial animada del flujo de Motion Graphics con IA compartido con la pestaña Inicio"></div>
+    </div>
+
+    <!-- Orden obligatorio: 3. Breve descripción de la ilustración -->
+    <p style="text-align:center; color: var(--text-muted); font-size:0.9rem;">
+      <strong>Descripción de la ilustración:</strong> Escena vectorial animada multicapa en formato $4:5$ que representa la extracción del ADN visual desde Pinterest y Claude hacia un lienzo vertical $9:16$ en Google Flow (modelo Ovniflash), sincronizado con la línea de tiempo de clips de $8\text{ segundos}$ y las ondas de voz de Gemini Flash (voz Pola).
+    </p>
+
+    <!-- Orden obligatorio: 4. Nombre del autor (elemento visual más destacado) -->
+    <div class="author-spotlight">Rubén Sbarsky</div>
+
+    <!-- Orden obligatorio: 5. Texto «Autor del tutorial» -->
+    <div class="author-role">Autor del tutorial</div>
+
+    <!-- Orden obligatorio: 6. Información adicional pertinente y Fecha/Hora sincronizada fija -->
+    <div class="card" style="text-align:center;">
+      <p><strong>Especialidad:</strong> Arquitectura de Workflows de Inteligencia Artificial Generativa, Automatización Audiovisual y Diseño Técnico de Prompts Maestros.</p>
+      <p><strong>Metodología de desarrollo:</strong> GAUNTLET V3 + Estándares de Ingeniería Clean Code (Uncle Bob).</p>
+      <p><strong>Fecha y hora de creación (Fija y Sincronizada):</strong> <code style="color:var(--accent); font-weight:800;">06/11/2026 — 09:24:44</code></p>
+      <!-- Orden obligatorio: 7. Número de versión coincidente con el archivo -->
+      <p><strong>Versión del entregable:</strong> <span class="badge">V001 (tutorial_motion_graphics_ia_V001.html)</span></p>
+    </div>
+
+    <div class="tab-footer-nav">
+      <button type="button" class="btn-nav-step" onclick="go(8)">⬅ Anterior: FUENTES</button>
+      <button type="button" class="btn-nav-step next" onclick="go(0)">Ir a INICIO ⌂</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- Botones flotantes movibles (Arrastrables): INICIO y ARRIBA -->
+<button type="button" class="floating-draggable" id="fab-home" title="Arrastra para mover o pulsa para ir a INICIO" aria-label="Ir a la pestaña INICIO">⌂ INICIO</button>
+<button type="button" class="floating-draggable" id="fab-top" title="Arrastra para mover o pulsa para subir al comienzo de la pestaña actual" aria-label="Volver arriba de la pestaña actual">↑ ARRIBA</button>
+
+<div id="toast-msg" role="status" aria-live="polite">Copiado al portapapeles</div>
+
+<script>
+(function() {
+  'use strict';
+
+  const STORAGE_KEY = 'mg_ia_tutorial_v001_state';
+  const secs = Array.from(document.querySelectorAll('.tab-section'));
+  const navChips = Array.from(document.querySelectorAll('#main-nav .chip[data-tab]'));
+  const dr = document.querySelector('#dr');
+  const mb = document.querySelector('#mb');
+  const ixBtn = document.querySelector('#ix');
+  const toastEl = document.getElementById('toast-msg');
+
+  let activeTabIndex = 0;
+  let svgTemplateMarkup = '';
+
+  /* =========================================================================
+   * MÓDULO 1: GESTIÓN DE PLANTILLA ÚNICA SVG Y MONTAJE CON IDs ÚNICOS
+   * ========================================================================= */
+  function extractMasterSvgTemplate() {
+    const sourceNode = document.getElementById('master-svg-source');
+    if (!sourceNode) return;
+    svgTemplateMarkup = sourceNode.innerHTML.trim();
+    sourceNode.remove();
+  }
+
+  function buildUniqueSvgMarkup(instanceSuffix) {
+    if (!svgTemplateMarkup) return '';
+    return svgTemplateMarkup.replace(/__UID__/g, '_' + instanceSuffix);
+  }
+
+  function applySvgDataUriFallback(container, instanceSuffix) {
+    const rawSvg = buildUniqueSvgMarkup(instanceSuffix);
+    if (!rawSvg) return;
+    const encoded = 'data:image/svg+xml;utf8,' + encodeURIComponent(rawSvg);
+    container.innerHTML = '<img src="' + encoded + '" alt="Ilustración animada de Motion Graphics con IA" style="width:100%;height:100%;display:block;object-fit:contain;"/>';
+  }
+
+  function mountSvgInContainer(containerId, instanceSuffix) {
+    const container = document.getElementById(containerId);
+    if (!container || !svgTemplateMarkup) return;
+
+    try {
+      container.innerHTML = buildUniqueSvgMarkup(instanceSuffix);
+      const svgElement = container.querySelector('svg');
+      if (!svgElement) {
+        applySvgDataUriFallback(container, instanceSuffix);
+      }
+    } catch (err) {
+      applySvgDataUriFallback(container, instanceSuffix);
+    }
+  }
+
+  function mountSvgForActiveTab(tabIndex) {
+    if (tabIndex === 0) {
+      mountSvgInContainer('svg-mount-home', 'home');
+    } else if (tabIndex === 9) {
+      mountSvgInContainer('svg-mount-credits', 'credits');
+    }
+  }
+
+  function repairVisibleEmptySvgContainers() {
+    if (activeTabIndex === 0) {
+      const homeMount = document.getElementById('svg-mount-home');
+      if (homeMount && !homeMount.querySelector('svg') && !homeMount.querySelector('img')) {
+        mountSvgInContainer('svg-mount-home', 'home');
+      }
+    }
+    if (activeTabIndex === 9) {
+      const creditsMount = document.getElementById('svg-mount-credits');
+      if (creditsMount && !creditsMount.querySelector('svg') && !creditsMount.querySelector('img')) {
+        mountSvgInContainer('svg-mount-credits', 'credits');
+      }
+    }
+  }
+
+  /* =========================================================================
+   * MÓDULO 2: ÍNDICE LATERAL (#dr) Y NAVEGACIÓN SPA (go)
+   * ========================================================================= */
+  function toggleDrawer(forceState) {
+    const willOpen = typeof forceState === 'boolean' ? forceState : !dr.classList.contains('o');
+    dr.classList.toggle('o', willOpen);
+    mb.setAttribute('aria-expanded', String(dr.classList.contains('o')));
+  }
+
+  function scrollToTopOfCurrentTab() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }
+
+  function go(index) {
+    const targetIndex = Number(index);
+    if (Number.isNaN(targetIndex) || targetIndex < 0 || targetIndex >= secs.length) {
+      return;
+    }
+
+    activeTabIndex = targetIndex;
+
+    secs.forEach(function(sec, idx) {
+      sec.classList.toggle('active', idx === targetIndex);
+    });
+
+    navChips.forEach(function(chip) {
+      const chipTab = Number(chip.getAttribute('data-tab'));
+      chip.classList.toggle('active', chipTab === targetIndex);
+    });
+
+    Array.from(dr.children).forEach(function(linkEl, idx) {
+      linkEl.classList.toggle('on', idx === targetIndex);
+    });
+
+    mountSvgForActiveTab(targetIndex);
+    scrollToTopOfCurrentTab();
+    saveUserState();
+  }
+
+  window.go = go;
+
+  function buildDynamicDrawerIndex() {
+    dr.innerHTML = '';
+    secs.forEach(function(sec, i) {
+      const a = document.createElement('a');
+      const titleText = sec.dataset.t || (sec.querySelector('h2') ? sec.querySelector('h2').textContent : 'Sección');
+      a.textContent = (i ? i + '. ' : '') + titleText;
+      a.setAttribute('href', '#sec-' + i);
+      a.onclick = function(ev) {
+        ev.preventDefault();
+        go(i);
+        toggleDrawer(false);
+      };
+      dr.appendChild(a);
+    });
+  }
+
+  /* =========================================================================
+   * MÓDULO 3: BOTONES FLOTANTES ARRASTRABLES (INICIO Y ARRIBA)
+   * ========================================================================= */
+  function makeButtonDraggableAndClickable(buttonEl, onClickAction) {
+    if (!buttonEl) return;
+    let isDragging = false;
+    let hasMoved = false;
+    let startX = 0;
+    let startY = 0;
+    let initialLeft = 0;
+    let initialTop = 0;
+
+    buttonEl.addEventListener('pointerdown', function(e) {
+      isDragging = true;
+      hasMoved = false;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = buttonEl.getBoundingClientRect();
+      initialLeft = rect.left;
+      initialTop = rect.top;
+      buttonEl.setPointerCapture(e.pointerId);
+    });
+
+    buttonEl.addEventListener('pointermove', function(e) {
+      if (!isDragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+        hasMoved = true;
+      }
+      if (!hasMoved) return;
+
+      const maxLeft = window.innerWidth - buttonEl.offsetWidth - 4;
+      const maxTop = window.innerHeight - buttonEl.offsetHeight - 4;
+      const nextLeft = Math.max(4, Math.min(maxLeft, initialLeft + dx));
+      const nextTop = Math.max(60, Math.min(maxTop, initialTop + dy));
+
+      buttonEl.style.left = nextLeft + 'px';
+      buttonEl.style.top = nextTop + 'px';
+      buttonEl.style.right = 'auto';
+      buttonEl.style.bottom = 'auto';
+    });
+
+    buttonEl.addEventListener('pointerup', function(e) {
+      if (!isDragging) return;
+      isDragging = false;
+      buttonEl.releasePointerCapture(e.pointerId);
+      if (!hasMoved) {
+        onClickAction();
+      }
+    });
+  }
+
+  /* =========================================================================
+   * MÓDULO 4: COPIADO AL PORTAPAPELES CON FALLBACK ROBUSTO
+   * ========================================================================= */
+  function showToast(message) {
+    if (!toastEl) return;
+    toastEl.textContent = message;
+    toastEl.classList.add('visible');
+    clearTimeout(toastEl._timer);
+    toastEl._timer = setTimeout(function() {
+      toastEl.classList.remove('visible');
+    }, 2400);
+  }
+
+  function fallbackCopyText(textToCopy, triggerBtn) {
+    try {
+      const tempArea = document.createElement('textarea');
+      tempArea.value = textToCopy;
+      tempArea.style.position = 'fixed';
+      tempArea.style.left = '-9999px';
+      document.body.appendChild(tempArea);
+      tempArea.focus();
+      tempArea.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(tempArea);
+      if (ok) {
+        indicateCopySuccess(triggerBtn);
+      } else {
+        showToast('Selecciona el texto manualmente para copiarlo');
+      }
+    } catch (err) {
+      showToast('No se pudo acceder al portapapeles');
+    }
+  }
+
+  function indicateCopySuccess(triggerBtn) {
+    if (triggerBtn) {
+      const originalLabel = triggerBtn.textContent;
+      triggerBtn.textContent = '¡COPIADO!';
+      setTimeout(function() {
+        triggerBtn.textContent = originalLabel;
+      }, 1600);
+    }
+    showToast('Texto copiado íntegro al portapapeles');
+  }
+
+  function handleCopyClick(triggerBtn) {
+    const targetId = triggerBtn.getAttribute('data-copy-target');
+    const sourceEl = document.getElementById(targetId);
+    if (!sourceEl) return;
+    const exactText = sourceEl.textContent;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(exactText).then(function() {
+        indicateCopySuccess(triggerBtn);
+      }).catch(function() {
+        fallbackCopyText(exactText, triggerBtn);
+      });
+    } else {
+      fallbackCopyText(exactText, triggerBtn);
+    }
+  }
+
+  /* =========================================================================
+   * MÓDULO 5: PERSISTENCIA SEGURA (localStorage) Y PREFERENCIAS
+   * ========================================================================= */
+  function loadUserState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+
+      if (data.theme === 'light') {
+        document.body.classList.add('light-theme');
+      }
+      if (data.fontSize && data.fontSize >= 13 && data.fontSize <= 22) {
+        document.documentElement.style.setProperty('--font-size-base', data.fontSize + 'px');
+      }
+      if (data.checks && typeof data.checks === 'object') {
+        Object.keys(data.checks).forEach(function(chkId) {
+          const inputEl = document.querySelector('input[data-check-id="' + chkId + '"]');
+          if (inputEl) inputEl.checked = Boolean(data.checks[chkId]);
+        });
+      }
+      if (typeof data.activeTab === 'number' && data.activeTab >= 0 && data.activeTab < secs.length) {
+        activeTabIndex = data.activeTab;
+      }
+    } catch (err) {
+      /* Ignorar de forma segura si localStorage está restringido */
+    }
+  }
+
+  function saveUserState() {
+    try {
+      const checksState = {};
+      document.querySelectorAll('input[data-check-id]').forEach(function(inputEl) {
+        checksState[inputEl.getAttribute('data-check-id')] = inputEl.checked;
+      });
+      const currentFontSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size-base'), 10) || 16;
+      const statePayload = {
+        theme: document.body.classList.contains('light-theme') ? 'light' : 'dark',
+        fontSize: currentFontSize,
+        checks: checksState,
+        activeTab: activeTabIndex
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(statePayload));
+    } catch (err) {
+      /* No bloquear el tutorial si falla localStorage */
+    }
+  }
+
+  /* =========================================================================
+   * MÓDULO 6: PREPARACIÓN Y RESTAURACIÓN PARA IMPRESIÓN / PDF
+   * ========================================================================= */
+  let closedDetailsBeforePrint = [];
+  let wasSvgPausedBeforePrint = false;
+
+  function prepareDocumentForPrint() {
+    mountSvgInContainer('svg-mount-home', 'home');
+    mountSvgInContainer('svg-mount-credits', 'credits');
+
+    wasSvgPausedBeforePrint = document.body.classList.contains('svg-paused');
+    document.body.classList.add('svg-paused');
+
+    closedDetailsBeforePrint = [];
+    document.querySelectorAll('details.qa-item').forEach(function(det) {
+      if (!det.open) {
+        closedDetailsBeforePrint.push(det);
+        det.open = true;
+      }
+    });
+  }
+
+  function restoreDocumentAfterPrint() {
+    closedDetailsBeforePrint.forEach(function(det) {
+      det.open = false;
+    });
+    closedDetailsBeforePrint = [];
+    if (!wasSvgPausedBeforePrint) {
+      document.body.classList.remove('svg-paused');
+    }
+  }
+
+  /* =========================================================================
+   * MÓDULO 7: INICIALIZACIÓN Y EVENTOS
+   * ========================================================================= */
+  function initTutorialApp() {
+    extractMasterSvgTemplate();
+    buildDynamicDrawerIndex();
+    loadUserState();
+    go(activeTabIndex);
+
+    /* Eventos barra superior y panel Índice */
+    mb.onclick = function() { toggleDrawer(); };
+    if (ixBtn) {
+      ixBtn.onclick = function() { toggleDrawer(true); };
+    }
+
+    navChips.forEach(function(chip) {
+      chip.addEventListener('click', function() {
+        const targetTab = Number(chip.getAttribute('data-tab'));
+        go(targetTab);
+        toggleDrawer(false);
+      });
+    });
+
+    window.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        toggleDrawer(false);
+      }
+    });
+
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('#dr, #mb, #ix')) {
+        toggleDrawer(false);
+      }
+      const copyBtn = e.target.closest('.btn-copy');
+      if (copyBtn) {
+        handleCopyClick(copyBtn);
+      }
+    });
+
+    /* Botones flotantes arrastrables */
+    makeButtonDraggableAndClickable(document.getElementById('fab-home'), function() {
+      go(0);
+    });
+    makeButtonDraggableAndClickable(document.getElementById('fab-top'), function() {
+      scrollToTopOfCurrentTab();
+    });
+
+    /* Controles de fuente, tema e impresión */
+    document.getElementById('btn-font-dec').addEventListener('click', function() {
+      const curr = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size-base'), 10) || 16;
+      const next = Math.max(13, curr - 1);
+      document.documentElement.style.setProperty('--font-size-base', next + 'px');
+      saveUserState();
+    });
+
+    document.getElementById('btn-font-inc').addEventListener('click', function() {
+      const curr = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--font-size-base'), 10) || 16;
+      const next = Math.min(21, curr + 1);
+      document.documentElement.style.setProperty('--font-size-base', next + 'px');
+      saveUserState();
+    });
+
+    document.getElementById('btn-theme').addEventListener('click', function() {
+      document.body.classList.toggle('light-theme');
+      saveUserState();
+    });
+
+    document.getElementById('btn-print').addEventListener('click', function() {
+      try {
+        prepareDocumentForPrint();
+        window.print();
+        setTimeout(restoreDocumentAfterPrint, 600);
+      } catch (err) {
+        restoreDocumentAfterPrint();
+        alert('Abre este archivo directamente en el navegador y utiliza Ctrl+P o Cmd+P');
+      }
+    });
+
+    window.addEventListener('beforeprint', prepareDocumentForPrint);
+    window.addEventListener('afterprint', restoreDocumentAfterPrint);
+
+    /* Pausa/Reanudación manual del SVG */
+    const toggleSvgBtn = document.getElementById('btn-toggle-svg-home');
+    if (toggleSvgBtn) {
+      toggleSvgBtn.addEventListener('click', function() {
+        document.body.classList.toggle('svg-paused');
+      });
+    }
+
+    /* Botones expandir/colapsar las 33 preguntas */
+    const btnExpandAll = document.getElementById('btn-expand-all-qa');
+    const btnCollapseAll = document.getElementById('btn-collapse-all-qa');
+    if (btnExpandAll && btnCollapseAll) {
+      btnExpandAll.addEventListener('click', function() {
+        document.querySelectorAll('#sec-5 details.qa-item').forEach(function(d) { d.open = true; });
+      });
+      btnCollapseAll.addEventListener('click', function() {
+        document.querySelectorAll('#sec-5 details.qa-item').forEach(function(d) { d.open = false; });
+      });
+    }
+
+    /* Buscador interno por pestaña */
+    const searchInput = document.getElementById('global-search');
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+        const query = searchInput.value.trim().toLowerCase();
+        const activeSec = secs[activeTabIndex];
+        if (!activeSec) return;
+        const blocks = activeSec.querySelectorAll('.card, details.qa-item');
+        blocks.forEach(function(block) {
+          if (!query) {
+            block.style.display = '';
+            return;
+          }
+          const match = block.textContent.toLowerCase().includes(query);
+          block.style.display = match ? '' : 'none';
+        });
+      });
+    }
+
+    /* Checklist persistente */
+    document.querySelectorAll('input[data-check-id]').forEach(function(chk) {
+      chk.addEventListener('change', saveUserState);
+    });
+
+    /* Barra de progreso de lectura */
+    window.addEventListener('scroll', function() {
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const pct = docHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / docHeight) * 100)) : 0;
+      const bar = document.getElementById('reading-progress');
+      if (bar) bar.style.width = pct + '%';
+    }, { passive: true });
+
+    /* Vigilancia periódica de contenedores SVG (punto 8 de especificación) */
+    setInterval(repairVisibleEmptySvgContainers, 2500);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTutorialApp);
+  } else {
+    initTutorialApp();
+  }
+})();
+</script>
+</body>
+</html>
